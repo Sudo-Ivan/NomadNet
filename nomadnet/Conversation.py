@@ -15,7 +15,7 @@ class Conversation:
     def received_announce(destination_hash, announced_identity, app_data):
         app = nomadnet.NomadNetworkApp.get_shared_instance()
 
-        if not destination_hash in app.ignored_list:
+        if destination_hash not in app.ignored_list:
             destination_hash_text = RNS.hexrep(destination_hash, delimit=False)
             # Check if the announced destination is in
             # our list of conversations
@@ -70,12 +70,12 @@ class Conversation:
             conversation = Conversation.cached_conversations[RNS.hexrep(source_hash, delimit=False)]
             conversation.scan_storage()
 
-        if not source_hash in Conversation.unread_conversations:
+        if source_hash not in Conversation.unread_conversations:
             Conversation.unread_conversations[source_hash] = True
             try:
                 dirname = RNS.hexrep(source_hash, delimit=False)
                 open(app.conversationpath + "/" + dirname + "/unread", 'a').close()
-            except Exception as e:
+            except Exception:
                 pass
 
             if Conversation.created_callback != None:

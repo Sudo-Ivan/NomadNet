@@ -1,10 +1,8 @@
 import RNS
 import urwid
-import time
 import os
 import platform
 
-import nomadnet
 from nomadnet.ui.textui import *
 from nomadnet import NomadNetworkApp
 

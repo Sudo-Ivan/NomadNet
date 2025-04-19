@@ -3,7 +3,8 @@
 
 import RNS
 import LXMF
-import os, time
+import os
+import time
 from queue import Queue
 import RNS.vendor.umsgpack as msgpack
 
@@ -72,7 +73,7 @@ def send_message(destination_hash, message_content):
       # Make a binary destination hash from a hexadecimal string
       destination_hash = bytes.fromhex(destination_hash)
 
-    except Exception as e:
+    except Exception:
       RNS.log("Invalid destination hash", RNS.LOG_ERROR)
       return
 

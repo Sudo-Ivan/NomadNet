@@ -200,7 +200,7 @@ class ConversationsDisplay():
                     direct_selected = False
                     propagated_selected = True
                     
-        except Exception as e:
+        except Exception:
             pass
 
         trust_button_group = []
@@ -339,7 +339,7 @@ class ConversationsDisplay():
                 elif r_trusted.state == True:
                     trust_level = DirectoryEntry.TRUSTED
 
-                if not source_hash in [c[0] for c in existing_conversations]:
+                if source_hash not in [c[0] for c in existing_conversations]:
                     entry = DirectoryEntry(source_hash, display_name, trust_level)
                     self.app.directory.remember(entry)
 
@@ -1071,7 +1071,7 @@ class ConversationWidget(urwid.WidgetWrap):
         name = ""
         try:
             name = self.frame.get_focus_widgets()[0].name
-        except Exception as e:
+        except Exception:
             pass
 
         if name == "messagelist":
@@ -1111,7 +1111,7 @@ class ConversationWidget(urwid.WidgetWrap):
         added_hashes = []
         for message in self.conversation.messages:
             message_hash = message.get_hash()
-            if not message_hash in added_hashes:
+            if message_hash not in added_hashes:
                 added_hashes.append(message_hash)
                 message_widget = LXMessageWidget(message)
                 self.message_widgets.append(message_widget)

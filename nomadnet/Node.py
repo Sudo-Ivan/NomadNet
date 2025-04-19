@@ -1,11 +1,9 @@
 import os
-import sys
 
 import RNS
 import time
 import threading
 import subprocess
-import RNS.vendor.umsgpack as msgpack
 
 class Node:
     JOB_INTERVAL = 5
@@ -57,7 +55,7 @@ class Node:
         self.servedpages = []
         self.scan_pages(self.app.pagespath)
 
-        if not self.app.pagespath+"index.mu" in self.servedpages:
+        if self.app.pagespath+"index.mu" not in self.servedpages:
             self.destination.register_request_handler(
                 "/page/index.mu",
                 response_generator = self.serve_default_index,
@@ -113,7 +111,7 @@ class Node:
             self.app.peer_settings["served_page_requests"] += 1
             self.app.save_peer_settings()
             
-        except Exception as e:
+        except Exception:
             RNS.log("Could not increase served page request count", RNS.LOG_ERROR)
 
         file_path = path.replace("/page", self.app.pagespath, 1)
@@ -198,7 +196,7 @@ class Node:
             self.app.peer_settings["served_file_requests"] += 1
             self.app.save_peer_settings()
             
-        except Exception as e:
+        except Exception:
             RNS.log("Could not increase served file request count", RNS.LOG_ERROR)
 
         file_path = path.replace("/file", self.app.filespath, 1)
@@ -251,7 +249,7 @@ class Node:
             self.app.peer_settings["node_connects"] += 1
             self.app.save_peer_settings()
 
-        except Exception as e:
+        except Exception:
             RNS.log("Could not increase node connection count", RNS.LOG_ERROR)
 
         link.set_link_closed_callback(self.peer_disconnected)

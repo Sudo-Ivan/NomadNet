@@ -175,7 +175,7 @@ class NomadNetworkApp:
                     nomadnet.panic()
 
                 RNS.log("Configuration loaded from "+self.configpath)
-            except Exception as e:
+            except Exception:
                 RNS.log("Could not parse the configuration at "+self.configpath, RNS.LOG_ERROR)
                 RNS.log("Check your configuration file for errors!", RNS.LOG_ERROR)
                 nomadnet.panic()
@@ -223,22 +223,22 @@ class NomadNetworkApp:
                 self.peer_settings = msgpack.unpackb(file.read())
                 file.close()
 
-                if not "node_last_announce" in self.peer_settings:
+                if "node_last_announce" not in self.peer_settings:
                     self.peer_settings["node_last_announce"] = None
 
-                if not "propagation_node" in self.peer_settings:
+                if "propagation_node" not in self.peer_settings:
                     self.peer_settings["propagation_node"] = None
 
-                if not "last_lxmf_sync" in self.peer_settings:
+                if "last_lxmf_sync" not in self.peer_settings:
                     self.peer_settings["last_lxmf_sync"] = 0
 
-                if not "node_connects" in self.peer_settings:
+                if "node_connects" not in self.peer_settings:
                     self.peer_settings["node_connects"] = 0
 
-                if not "served_page_requests" in self.peer_settings:
+                if "served_page_requests" not in self.peer_settings:
                     self.peer_settings["served_page_requests"] = 0
 
-                if not "served_file_requests" in self.peer_settings:
+                if "served_file_requests" not in self.peer_settings:
                     self.peer_settings["served_file_requests"] = 0
 
             except Exception as e:
@@ -332,7 +332,7 @@ class NomadNetworkApp:
                     if len(dest_hash) == RNS.Reticulum.TRUNCATED_HASHLENGTH//8:
                         self.message_router.prioritise(dest_hash)
 
-                except Exception as e:
+                except Exception:
                     RNS.log("Cannot prioritise "+str(dest_str)+", it is not a valid destination hash", RNS.LOG_ERROR)
 
             if self.disable_propagation:
@@ -799,36 +799,36 @@ class NomadNetworkApp:
                     if value == "text":
                         self.uimode = nomadnet.ui.UI_TEXT
                         if "textui" in self.config:
-                            if not "intro_time" in self.config["textui"]:
+                            if "intro_time" not in self.config["textui"]:
                                 self.config["textui"]["intro_time"] = 1
                             else:
                                 self.config["textui"]["intro_time"] = self.config["textui"].as_int("intro_time")
 
-                            if not "intro_text" in self.config["textui"]:
+                            if "intro_text" not in self.config["textui"]:
                                 self.config["textui"]["intro_text"] = "Nomad Network"
 
-                            if not "editor" in self.config["textui"]:
+                            if "editor" not in self.config["textui"]:
                                 self.config["textui"]["editor"] = "nano"
 
-                            if not "glyphs" in self.config["textui"]:
+                            if "glyphs" not in self.config["textui"]:
                                 self.config["textui"]["glyphs"] = "unicode"
 
-                            if not "mouse_enabled" in self.config["textui"]:
+                            if "mouse_enabled" not in self.config["textui"]:
                                 self.config["textui"]["mouse_enabled"] = True
                             else:
                                 self.config["textui"]["mouse_enabled"] = self.config["textui"].as_bool("mouse_enabled")
 
-                            if not "hide_guide" in self.config["textui"]:
+                            if "hide_guide" not in self.config["textui"]:
                                 self.config["textui"]["hide_guide"] = False
                             else:
                                 self.config["textui"]["hide_guide"] = self.config["textui"].as_bool("hide_guide")
 
-                            if not "animation_interval" in self.config["textui"]:
+                            if "animation_interval" not in self.config["textui"]:
                                 self.config["textui"]["animation_interval"] = 1
                             else:
                                 self.config["textui"]["animation_interval"] = self.config["textui"].as_int("animation_interval")
 
-                            if not "colormode" in self.config["textui"]:
+                            if "colormode" not in self.config["textui"]:
                                 self.config["textui"]["colormode"] = nomadnet.ui.COLORMODE_16
                             else:
                                 if self.config["textui"]["colormode"].lower() == "monochrome":
@@ -844,7 +844,7 @@ class NomadNetworkApp:
                                 else:
                                     raise ValueError("The selected Text UI color mode is invalid")
 
-                            if not "theme" in self.config["textui"]:
+                            if "theme" not in self.config["textui"]:
                                 self.config["textui"]["theme"] = nomadnet.ui.TextUI.THEME_DARK
                             else:
                                 if self.config["textui"]["theme"].lower() == "dark":
@@ -861,12 +861,12 @@ class NomadNetworkApp:
                         self.uimode = nomadnet.ui.UI_WEB
 
         if "node" in self.config:
-            if not "enable_node" in self.config["node"]:
+            if "enable_node" not in self.config["node"]:
                 self.enable_node = False
             else:
                 self.enable_node = self.config["node"].as_bool("enable_node")
 
-            if not "node_name" in self.config["node"]:
+            if "node_name" not in self.config["node"]:
                 self.node_name = None
             else:
                 value = self.config["node"]["node_name"]
@@ -875,12 +875,12 @@ class NomadNetworkApp:
                 else:
                     self.node_name = self.config["node"]["node_name"]
 
-            if not "disable_propagation" in self.config["node"]:
+            if "disable_propagation" not in self.config["node"]:
                 self.disable_propagation = False
             else:
                 self.disable_propagation = self.config["node"].as_bool("disable_propagation")
 
-            if not "max_transfer_size" in self.config["node"]:
+            if "max_transfer_size" not in self.config["node"]:
                 self.lxmf_max_propagation_size = 256
             else:
                 value = self.config["node"].as_float("max_transfer_size")
@@ -888,13 +888,13 @@ class NomadNetworkApp:
                     value = 1
                 self.lxmf_max_propagation_size = value
 
-            if not "announce_at_start" in self.config["node"]:
+            if "announce_at_start" not in self.config["node"]:
                 self.node_announce_at_start = False
             else:
                 value = self.config["node"].as_bool("announce_at_start")
                 self.node_announce_at_start = value
 
-            if not "announce_interval" in self.config["node"]:
+            if "announce_interval" not in self.config["node"]:
                 self.node_announce_interval = 720
             else:
                 value = self.config["node"].as_int("announce_interval")
@@ -905,7 +905,7 @@ class NomadNetworkApp:
             if "pages_path" in self.config["node"]:
                 self.pagespath = self.config["node"]["pages_path"]
                 
-            if not "page_refresh_interval" in self.config["node"]:
+            if "page_refresh_interval" not in self.config["node"]:
                 self.page_refresh_interval = 0
             else:
                 value = self.config["node"].as_int("page_refresh_interval")
@@ -917,7 +917,7 @@ class NomadNetworkApp:
             if "files_path" in self.config["node"]:
                 self.filespath = self.config["node"]["files_path"]
                 
-            if not "file_refresh_interval" in self.config["node"]:
+            if "file_refresh_interval" not in self.config["node"]:
                 self.file_refresh_interval = 0
             else:
                 value = self.config["node"].as_int("file_refresh_interval")
@@ -936,7 +936,7 @@ class NomadNetworkApp:
             else:
                 self.static_peers = []
                 
-            if not "max_peers" in self.config["node"]:
+            if "max_peers" not in self.config["node"]:
                 self.max_peers = None
             else:
                 value = self.config["node"].as_int("max_peers")
@@ -944,7 +944,7 @@ class NomadNetworkApp:
                     value = 0
                 self.max_peers = value
 
-            if not "message_storage_limit" in self.config["node"]:
+            if "message_storage_limit" not in self.config["node"]:
                 self.message_storage_limit = 2000
             else:
                 value = self.config["node"].as_float("message_storage_limit")
@@ -957,7 +957,7 @@ class NomadNetworkApp:
         self.print_all_messages = False
         self.print_trusted_messages = False
         if "printing" in self.config:
-            if not "print_messages" in self.config["printing"]:
+            if "print_messages" not in self.config["printing"]:
                 self.print_messages = False
             else:
                 self.print_messages = self.config["printing"].as_bool("print_messages")
@@ -966,7 +966,7 @@ class NomadNetworkApp:
                     self.print_command = self.config["printing"]["print_command"]
 
                 if self.print_messages:
-                    if not "print_from" in self.config["printing"]:
+                    if "print_from" not in self.config["printing"]:
                         self.allowed_message_print_destinations = None
                     else:
                         if type(self.config["printing"]["print_from"]) == str:
@@ -989,7 +989,7 @@ class NomadNetworkApp:
                                         self.print_trusted_messages = True
 
 
-                    if not "message_template" in self.config["printing"]:
+                    if "message_template" not in self.config["printing"]:
                         self.printing_template_msg = __printing_template_msg__
                     else:
                         mt_path = os.path.expanduser(self.config["printing"]["message_template"])

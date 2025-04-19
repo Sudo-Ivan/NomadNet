@@ -5,7 +5,7 @@ import time
 import threading
 from datetime import datetime
 from nomadnet.Directory import DirectoryEntry
-from nomadnet.vendor.additional_urwid_widgets import IndicativeListBox, MODIFIER_KEY
+from nomadnet.vendor.additional_urwid_widgets import IndicativeListBox
 
 from .Browser import Browser
 
@@ -88,7 +88,7 @@ class AnnounceInfo(urwid.WidgetWrap):
             data_style = ""
             if trust_level != DirectoryEntry.TRUSTED and len(data_str) > 32:
                 data_str = data_str[:32]+" [...]"
-        except Exception as e:
+        except Exception:
             data_str = "Decode failed"
             data_style = "list_untrusted"
 
@@ -145,7 +145,7 @@ class AnnounceInfo(urwid.WidgetWrap):
                     source_hash_text = RNS.hexrep(op_hash, delimit=False)
                     display_name = op_str
 
-                    if not source_hash_text in [c[0] for c in existing_conversations]:
+                    if source_hash_text not in [c[0] for c in existing_conversations]:
                         entry = DirectoryEntry(source_hash, display_name, trust_level)
                         self.app.directory.remember(entry)
 
@@ -166,7 +166,7 @@ class AnnounceInfo(urwid.WidgetWrap):
                 source_hash_text = RNS.hexrep(source_hash, delimit=False)
                 display_name = data_str
 
-                if not source_hash_text in [c[0] for c in existing_conversations]:
+                if source_hash_text not in [c[0] for c in existing_conversations]:
                     entry = DirectoryEntry(source_hash, display_name, trust_level)
                     self.app.directory.remember(entry)
 
@@ -317,7 +317,7 @@ class AnnounceStreamEntry(urwid.WidgetWrap):
         options = parent.left_pile.options(height_type=urwid.WEIGHT, height_amount=1)
         parent.left_pile.contents[0] = (info_widget, options)
 
-      except KeyError as e:
+      except KeyError:
         def dismiss_dialog(sender):
             self.delegate.parent.close_list_dialogs()
 
@@ -640,7 +640,7 @@ class KnownNodeInfo(urwid.WidgetWrap):
                     source_hash_text = RNS.hexrep(op_hash, delimit=False)
                     display_name = op_str
 
-                    if not source_hash_text in [c[0] for c in existing_conversations]:
+                    if source_hash_text not in [c[0] for c in existing_conversations]:
                         entry = DirectoryEntry(source_hash, display_name, trust_level)
                         self.app.directory.remember(entry)
 

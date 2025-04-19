@@ -1,5 +1,4 @@
 import RNS
-import nomadnet
 import time
 
 from nomadnet import NomadNetworkApp

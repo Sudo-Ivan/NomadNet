@@ -149,7 +149,7 @@ class Scrollable(urwid.WidgetDecoration):
                                     break
 
                             pwi += 1
-                except Exception as e:
+                except Exception:
                     pass
 
             else:

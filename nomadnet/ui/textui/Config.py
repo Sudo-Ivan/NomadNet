@@ -1,4 +1,3 @@
-import nomadnet
 import urwid
 import platform
 

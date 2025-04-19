@@ -148,7 +148,8 @@ class MainDisplay():
                 if self.sub_displays.log_display.log_term.log_term != None:
                     logterm_pid = self.sub_displays.log_display.log_term.log_term.pid
                     if logterm_pid != None:
-                        import os, signal
+                        import os
+                        import signal
                         os.kill(logterm_pid, signal.SIGKILL)
 
         raise urwid.ExitMainLoop

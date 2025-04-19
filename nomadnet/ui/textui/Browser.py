@@ -258,7 +258,7 @@ class Browser:
 
     def handle_lxmf_link(self, link_target):
         try:
-            if not type(link_target) is str:
+            if type(link_target) is not str:
                 raise ValueError("Invalid data type for LXMF link")
 
             if len(link_target) != (RNS.Reticulum.TRUNCATED_HASHLENGTH//8)*2:
@@ -267,7 +267,7 @@ class Browser:
             try:
                 bytes.fromhex(link_target)
 
-            except Exception as e:
+            except Exception:
                 raise ValueError("Could not decode destination hash from LXMF link")
 
             existing_conversations = nomadnet.Conversation.conversation_list(self.app)
@@ -279,7 +279,7 @@ class Browser:
             if display_name_data != None:
                 display_name = LXMF.display_name_from_app_data(display_name_data)
 
-            if not source_hash_text in [c[0] for c in existing_conversations]:
+            if source_hash_text not in [c[0] for c in existing_conversations]:
                 entry = DirectoryEntry(bytes.fromhex(source_hash_text), display_name=display_name)
                 self.app.directory.remember(entry)
 
@@ -448,7 +448,7 @@ class Browser:
             if len(components[0]) == (RNS.Reticulum.TRUNCATED_HASHLENGTH//8)*2:
                 try:
                     destination_hash = bytes.fromhex(components[0])
-                except Exception as e:
+                except Exception:
                     raise ValueError("Malformed URL")
                 path = Browser.DEFAULT_PATH
             else:
@@ -457,7 +457,7 @@ class Browser:
             if len(components[0]) == (RNS.Reticulum.TRUNCATED_HASHLENGTH//8)*2:
                 try:
                     destination_hash = bytes.fromhex(components[0])
-                except Exception as e:
+                except Exception:
                     raise ValueError("Malformed URL")
                 path = components[1]
                 if len(path) == 0:
@@ -737,7 +737,7 @@ class Browser:
                 self.delegate.columns.contents[1] = (overlay, options)
                 self.delegate.columns.focus_position = 1
 
-            except Exception as e:
+            except Exception:
                 pass
 
     def load_page(self):
@@ -1010,7 +1010,7 @@ class Browser:
                         RNS.log("Removing stale cache entry "+str(file), RNS.LOG_DEBUG)
                         os.unlink(cachepath)
 
-            except Exception as e:
+            except Exception:
                 pass
 
 
@@ -1073,7 +1073,7 @@ class Browser:
                 if self.link != None:
                     try:
                         self.link.teardown()
-                    except Exception as e:
+                    except Exception:
                         pass
         else:
             self.status = Browser.REQUEST_FAILED
@@ -1085,7 +1085,7 @@ class Browser:
             if self.link != None:
                 try:
                     self.link.teardown()
-                except Exception as e:
+                except Exception:
                     pass
 
 
@@ -1099,7 +1099,7 @@ class Browser:
         if self.link != None:
             try:
                 self.link.teardown()
-            except Exception as e:
+            except Exception:
                 pass
 
 

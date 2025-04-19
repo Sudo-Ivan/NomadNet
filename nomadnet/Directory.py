@@ -1,6 +1,5 @@
 import os
 import RNS
-import LXMF
 import time
 import nomadnet
 import threading
@@ -38,7 +37,7 @@ class Directory:
         try:
             app = nomadnet.NomadNetworkApp.get_shared_instance()
 
-            if not destination_hash in app.ignored_list:
+            if destination_hash not in app.ignored_list:
                 associated_peer = RNS.Destination.hash_from_name_and_identity("lxmf.delivery", announced_identity)
 
                 app.directory.node_announce_received(destination_hash, app_data, associated_peer)
@@ -323,7 +322,7 @@ class Directory:
             else:
                 return False
 
-        except Exception as e:
+        except Exception:
             return False
 
     def should_identify_on_connect(self, source_hash):
@@ -355,7 +354,7 @@ class Directory:
         unique_hashes = []
         cutoff_time = time.time()-lookback_seconds
         for entry in self.announce_stream:
-            if not entry[1] in unique_hashes:
+            if entry[1] not in unique_hashes:
                 if lookback_seconds == None or entry[0] > cutoff_time:
                     unique_hashes.append(entry[1])
 

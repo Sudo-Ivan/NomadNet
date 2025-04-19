@@ -1,6 +1,5 @@
 import nomadnet
 import urwid
-import random
 import time
 from urwid.util import is_mouse_press
 from urwid.text_layout import calc_coords
@@ -58,7 +57,7 @@ def markup_to_attrmaps(markup, url_delegate = None):
 
     # Split entire document into lines for
     # processing.
-    lines = markup.split("\n");
+    lines = markup.split("\n")
 
     for line in lines:
         if len(line) > 0:
@@ -342,7 +341,7 @@ def make_style(state):
                             else:
                                 result = "dark blue"
 
-        except Exception as e:
+        except Exception:
             result = "default"
 
         return result
@@ -367,7 +366,7 @@ def make_style(state):
                     v6 = parseval_hex(color[5])
                     color = "#"+v1+v2+v3+v4+v5+v6
 
-                except Exception as e:
+                except Exception:
                     return "default"
 
                 return color
@@ -378,7 +377,7 @@ def make_style(state):
                         v1 = parseval_dec(color[1])
                         v2 = parseval_dec(color[2])
 
-                    except Exception as e:
+                    except Exception:
                         return "default"
 
                     return "g"+v1+v2
@@ -390,7 +389,7 @@ def make_style(state):
                         v3 = parseval_hex(color[2])
                         color = v1+v2+v3
                         
-                    except Exception as e:
+                    except Exception:
                         return "default"
 
                     r = color[0]
@@ -414,13 +413,13 @@ def make_style(state):
         format_string += ",italics"
 
     name = "micron_"+fg+"_"+bg+"_"+format_string
-    if not name in SYNTH_STYLES:
+    if name not in SYNTH_STYLES:
         screen = nomadnet.NomadNetworkApp.get_shared_instance().ui.screen
         screen.register_palette_entry(name, low_color(fg)+format_string,low_color(bg),mono_color(fg, bg)+format_string,high_color(fg)+format_string,high_color(bg))
         
         synth_spec = screen._palette[name]
         SYNTH_STYLES.append(name)
-        if not name in SYNTH_SPECS:
+        if name not in SYNTH_SPECS:
             SYNTH_SPECS[name] = synth_spec
 
     return name
@@ -577,7 +576,7 @@ def make_output(state, line, url_delegate):
                                             "style": make_style(state)
                                         })
                                     skip = field_end - i
-                        except Exception as e:
+                        except Exception:
                             pass
 
                     
@@ -865,5 +864,5 @@ class LinkableText(urwid.Text):
                 
                 return True
             
-        except Exception as e:
+        except Exception:
             return False

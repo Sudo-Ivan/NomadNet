@@ -1,7 +1,6 @@
-import RNS
 import urwid
 import nomadnet
-from nomadnet.vendor.additional_urwid_widgets import IndicativeListBox, MODIFIER_KEY
+from nomadnet.vendor.additional_urwid_widgets import IndicativeListBox
 from .MicronParser import markup_to_attrmaps
 from nomadnet.vendor.Scrollable import *
 
