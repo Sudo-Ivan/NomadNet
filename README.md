@@ -15,6 +15,8 @@ chown -R 65532:65532 nomadnetconfig reticulumconfig
 docker-compose up -d
 ```
 
+for AutoInterface, add `network_mode: host` in docker-compose.yml
+
 # Nomad Network - Communicate Freely
 
 Off-grid, resilient mesh communication with strong encryption, forward secrecy and extreme privacy.

@@ -27,4 +27,3 @@ services:
         soft: 512
         hard: 1024
     restart: unless-stopped
-    network_mode: host 
