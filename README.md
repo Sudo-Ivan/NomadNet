@@ -1,3 +1,16 @@
+# Ivans Fork
+
+1. Use Chainguard Python images 
+2. Use non-root user
+3. Set resource limits
+4. Add docker-compose 
+
+```
+mkdir -p nomadnetconfig reticulumconfig
+chown -R 65532:65532 nomadnetconfig reticulumconfig
+docker-compose up -d
+```
+
 # Nomad Network - Communicate Freely
 
 Off-grid, resilient mesh communication with strong encryption, forward secrecy and extreme privacy.

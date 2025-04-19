@@ -1,6 +1,16 @@
-FROM python:3.12-alpine as build
+FROM cgr.dev/chainguard/python:latest-dev as build
 
-RUN apk add --no-cache build-base linux-headers libffi-dev cargo
+# Switch to root for package installation
+USER root
+
+# Install build dependencies
+RUN apk add --no-cache \
+    --repository=https://packages.wolfi.dev/os \
+    build-base \
+    libffi-dev \
+    rust \
+    pkgconf \
+    linux-headers
 
 # Create a virtualenv that we'll copy to the published image
 RUN python -m venv /opt/venv
@@ -11,7 +21,7 @@ COPY . /app/
 RUN cd /app/ && pip3 install .
 
 # Use multi-stage build, as we don't need rust compilation on the final image
-FROM python:3.12-alpine
+FROM cgr.dev/chainguard/python:latest
 
 LABEL org.opencontainers.image.documentation="https://github.com/markqvist/NomadNet#nomad-network-daemon-with-docker"
 
@@ -19,8 +29,15 @@ ENV PATH="/opt/venv/bin:$PATH"
 ENV PYTHONUNBUFFERED="yes"
 COPY --from=build /opt/venv /opt/venv
 
-VOLUME /root/.reticulum
-VOLUME /root/.nomadnetwork
+# Create directories and set permissions
+RUN mkdir -p /home/nonroot/.reticulum /home/nonroot/.nomadnetwork && \
+    chown -R nonroot:nonroot /home/nonroot
+
+USER nonroot
+WORKDIR /home/nonroot
+
+VOLUME /home/nonroot/.reticulum
+VOLUME /home/nonroot/.nomadnetwork
 
 ENTRYPOINT ["nomadnet"]
 CMD ["--daemon"]

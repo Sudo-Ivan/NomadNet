@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  nomadnet:
+    build: .
+    container_name: nomadnet
+    volumes:
+      - ./nomadnetconfig:/home/nonroot/.nomadnetwork
+      - ./reticulumconfig:/home/nonroot/.reticulum
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:unconfined
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    ulimits:
+      nofile:
+        soft: 512
+        hard: 1024
+    restart: unless-stopped
+    network_mode: host 
