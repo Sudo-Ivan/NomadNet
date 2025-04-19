@@ -21,7 +21,7 @@ COPY . /app/
 RUN cd /app/ && pip3 install .
 
 # Use multi-stage build, as we don't need rust compilation on the final image
-FROM cgr.dev/chainguard/python:latest
+FROM cgr.dev/chainguard/python:latest-dev
 
 LABEL org.opencontainers.image.documentation="https://github.com/markqvist/NomadNet#nomad-network-daemon-with-docker"
 
