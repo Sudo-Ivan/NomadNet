@@ -6,6 +6,10 @@
 4. Add docker-compose 
 
 ```
+docker pull ghcr.io/sudo-ivan/nomadnet:master
+```
+
+```
 mkdir -p nomadnetconfig reticulumconfig
 chown -R 65532:65532 nomadnetconfig reticulumconfig
 docker-compose up -d

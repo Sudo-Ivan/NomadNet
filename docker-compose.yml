@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   nomadnet:
-    build: .
+    image: ghcr.io/sudo-ivan/nomadnet:master
     container_name: nomadnet
     volumes:
       - ./nomadnetconfig:/home/nonroot/.nomadnetwork
