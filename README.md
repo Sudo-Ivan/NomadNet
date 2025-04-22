@@ -3,7 +3,8 @@
 1. Use Chainguard Python images 
 2. Use non-root user
 3. Set resource limits
-4. Add docker-compose 
+4. Add docker-compose
+- [ ] Add pinned hashes to workflows
 
 ```
 docker pull ghcr.io/sudo-ivan/nomadnet:master
