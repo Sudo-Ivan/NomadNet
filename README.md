@@ -1,10 +1,11 @@
 # Ivans Fork
 
-1. Use Chainguard Python images 
+Image: `ghcr.io/sudo-ivan/nomadnet:master`
+
+1. Use Chainguard Python images
 2. Use non-root user
-3. Set resource limits
+3. Set resource limits (compose)
 4. Add docker-compose
-- [ ] Add pinned hashes to workflows
 
 ```
 docker pull ghcr.io/sudo-ivan/nomadnet:master
@@ -14,6 +15,22 @@ docker pull ghcr.io/sudo-ivan/nomadnet:master
 mkdir -p nomadnetconfig reticulumconfig
 chown -R 65532:65532 nomadnetconfig reticulumconfig
 docker-compose up -d
+```
+
+```bash
+docker run -d \
+  --name nomadnet \
+  -v ./nomadnet/:/home/nonroot/.nomadnetwork \
+  -v ./reticulum:/home/nonroot/.reticulum \
+  --network host \
+  ghcr.io/sudo-ivan/nomadnet:master
+
+podman run -d \
+  --name nomadnet \
+  -v ./nomadnet/:/home/nonroot/.nomadnetwork \
+  -v ./reticulum:/home/nonroot/.reticulum \
+  --network host \
+  ghcr.io/sudo-ivan/nomadnet:master
 ```
 
 for AutoInterface, add `network_mode: host` in docker-compose.yml
