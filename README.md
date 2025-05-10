@@ -1,5 +1,7 @@
 # Ivans Fork
 
+Only for serving as servers and rendering static Micron pages.
+
 Image: `ghcr.io/sudo-ivan/nomadnet:master`
 
 1. Use Chainguard Python images
