@@ -30,20 +30,14 @@ SYNTH_SPECS  = {}
 SECTION_INDENT = 2
 INDENT_RIGHT   = 1
 
-def markup_to_attrmaps(markup, url_delegate = None):
-    global SELECTED_STYLES
-    if nomadnet.NomadNetworkApp.get_shared_instance().config["textui"]["theme"] == nomadnet.ui.TextUI.THEME_DARK:
-        SELECTED_STYLES = STYLES_DARK
-    else:
-        SELECTED_STYLES = STYLES_LIGHT
-
-    attrmaps = []
-
+def default_state(fg=None, bg=None):
+    if fg == None: fg = SELECTED_STYLES["plain"]["fg"]
+    if bg == None: bg = DEFAULT_BG
     state = {
         "literal": False,
         "depth": 0,
-        "fg_color": SELECTED_STYLES["plain"]["fg"],
-        "bg_color": DEFAULT_BG,
+        "fg_color": fg,
+        "bg_color": bg,
         "formatting": {
             "bold": False,
             "underline": False,
@@ -53,7 +47,25 @@ def markup_to_attrmaps(markup, url_delegate = None):
         },
         "default_align": "left",
         "align": "left",
+        "default_fg": fg,
+        "default_bg": bg,
     }
+    return state
+
+def markup_to_attrmaps(markup, url_delegate = None, fg_color=None, bg_color=None):
+    global SELECTED_STYLES
+    if nomadnet.NomadNetworkApp.get_shared_instance().config["textui"]["theme"] == nomadnet.ui.TextUI.THEME_DARK:
+        SELECTED_STYLES = STYLES_DARK
+    else:
+        SELECTED_STYLES = STYLES_LIGHT
+
+    attrmaps = []
+
+    fgc = None; bgc = DEFAULT_BG
+    if bg_color != None: bgc = bg_color
+    if fg_color != None: fgc = fg_color
+
+    state = default_state(fgc, bgc)
 
     # Split entire document into lines for
     # processing.
@@ -72,8 +84,8 @@ def markup_to_attrmaps(markup, url_delegate = None):
 
     return attrmaps
 
-
 def parse_line(line, state, url_delegate):
+    pre_escape = False
     if len(line) > 0:
         first_char = line[0]
 
@@ -87,6 +99,7 @@ def parse_line(line, state, url_delegate):
             # Check if the command is an escape
             if first_char == "\\":
                 line = line[1:]
+                pre_escape = True
 
             # Check for comments
             elif first_char == "#":
@@ -141,7 +154,7 @@ def parse_line(line, state, url_delegate):
                 else:
                     return [urwid.Padding(urwid.Divider(divider_char), left=left_indent(state), right=right_indent(state))]
 
-        output = make_output(state, line, url_delegate)
+        output = make_output(state, line, url_delegate, pre_escape)
 
         if output != None:
             text_only = True
@@ -424,7 +437,7 @@ def make_style(state):
 
     return name
 
-def make_output(state, line, url_delegate):
+def make_output(state, line, url_delegate, pre_escape=False):
     output = []
     if state["literal"]:
         if line == "\\`=":
@@ -433,8 +446,9 @@ def make_output(state, line, url_delegate):
     else:
         part = ""
         mode = "text"
-        escape = False
+        escape = pre_escape
         skip = 0
+
         for i in range(0, len(line)):
             c = line[i]
             if skip > 0:
@@ -453,20 +467,20 @@ def make_output(state, line, url_delegate):
                             state["fg_color"] = color
                             skip = 3
                     elif c == "f":
-                        state["fg_color"] = SELECTED_STYLES["plain"]["fg"]
+                        state["fg_color"] = state["default_fg"]
                     elif c == "B":
                         if len(line) >= i+4:
                             color = line[i+1:i+4]
                             state["bg_color"] = color
                             skip = 3
                     elif c == "b":
-                        state["bg_color"] = DEFAULT_BG
+                        state["bg_color"] = state["default_bg"]
                     elif c == "`":
                         state["formatting"]["bold"]      = False 
                         state["formatting"]["underline"] = False
                         state["formatting"]["italic"]    = False
-                        state["fg_color"] = SELECTED_STYLES["plain"]["fg"]
-                        state["bg_color"] = DEFAULT_BG
+                        state["fg_color"] = state["default_fg"]
+                        state["bg_color"] = state["default_bg"]
                         state["align"] = state["default_align"]
                     elif c == "c":
                         if state["align"] != "center":
@@ -665,6 +679,7 @@ def make_output(state, line, url_delegate):
                                 part = ""
                     else:
                         part += c
+                        escape = False
 
             if i == len(line)-1:
                 if len(part) > 0:

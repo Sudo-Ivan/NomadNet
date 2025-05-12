@@ -1,12 +1,14 @@
 import RNS
 import LXMF
+import io
 import os
 import time
 import urwid
+import shutil
 import nomadnet
 import subprocess
 import threading
-from .MicronParser import markup_to_attrmaps
+from .MicronParser import markup_to_attrmaps, make_style, default_state
 from nomadnet.Directory import DirectoryEntry
 from nomadnet.vendor.Scrollable import *
 
@@ -91,9 +93,14 @@ class Browser:
         self.link = None
         self.loopback = None
         self.status = Browser.DISCONECTED
+        self.progress_updated_at = None
+        self.previous_progress = 0
         self.response_progress = 0
+        self.response_speed = None
         self.response_size = None
         self.response_transfer_size = None
+        self.page_background_color = None
+        self.page_foreground_color = None
         self.saved_file_name = None
         self.page_data = None
         self.displayed_page_data = None
@@ -152,10 +159,16 @@ class Browser:
                 self.browser_footer = self.make_status_widget()
                 self.frame.contents["footer"] = (self.browser_footer, self.frame.options())
                 self.link_status_showing = False
+                if self.page_background_color != None or self.page_foreground_color != None:
+                    style_name = make_style(default_state(fg=self.page_foreground_color, bg=self.page_background_color))
+                    self.browser_footer.set_attr_map({None: style_name})
         else:
             self.link_status_showing = True
             self.browser_footer = urwid.AttrMap(urwid.Pile([urwid.Divider(self.g["divider1"]), urwid.Text("Link to: "+str(link_target))]), "browser_controls")
             self.frame.contents["footer"] = (self.browser_footer, self.frame.options())
+            if self.page_background_color != None or self.page_foreground_color != None:
+                style_name = make_style(default_state(fg=self.page_foreground_color, bg=self.page_background_color))
+                self.browser_footer.set_attr_map({None: style_name})
 
     def expand_shorthands(self, destination_type):
         if destination_type == "nnn":
@@ -316,7 +329,14 @@ class Browser:
 
     def make_status_widget(self):
         if self.response_progress > 0:
-            pb = ResponseProgressBar("progress_empty" , "progress_full", current=self.response_progress, done=1.0, satt=None)
+            if self.page_background_color != None or self.page_foreground_color != None:
+                style_name = make_style(default_state(fg=self.page_foreground_color, bg=self.page_background_color))
+                style_name_inverted = make_style(default_state(bg=self.page_foreground_color, fg=self.page_background_color))
+            else:
+                style_name = "progress_empty"
+                style_name_inverted = "progress_full"
+
+            pb = ResponseProgressBar(style_name , style_name_inverted, current=self.response_progress, done=1.0, satt=None, owner=self)
             widget = urwid.Pile([urwid.Divider(self.g["divider1"]), pb])
         else:
             widget = urwid.Pile([urwid.Divider(self.g["divider1"]), urwid.Text(self.status_text())])
@@ -363,6 +383,10 @@ class Browser:
         else:
             self.display_widget.set_attr_map({None: "body_text"})
             self.browser_header = self.make_control_widget()
+            if self.page_background_color != None or self.page_foreground_color != None:
+                style_name = make_style(default_state(fg=self.page_foreground_color, bg=self.page_background_color))
+                self.browser_header.set_attr_map({None: style_name})
+
             if self.destination_hash != None:
                 remote_display_string = self.app.directory.simplest_display_str(self.destination_hash)
             else:
@@ -376,6 +400,13 @@ class Browser:
             if self.status == Browser.DONE:
                 self.browser_footer = self.make_status_widget()
                 self.update_page_display()
+
+                if self.page_background_color != None or self.page_foreground_color != None:
+                    style_name = make_style(default_state(fg=self.page_foreground_color, bg=self.page_background_color))
+                    self.browser_body.set_attr_map({None: style_name})
+                    self.browser_footer.set_attr_map({None: style_name})
+                    self.browser_header.set_attr_map({None: style_name})
+                    self.display_widget.set_attr_map({None: style_name})
             
             elif self.status == Browser.LINK_TIMEOUT:
                 self.browser_body = self.make_request_failed_widget()
@@ -389,6 +420,12 @@ class Browser:
                     )
 
                 self.browser_footer = self.make_status_widget()
+
+                if self.page_background_color != None or self.page_foreground_color != None:
+                    style_name = make_style(default_state(fg=self.page_foreground_color, bg=self.page_background_color))
+                    self.browser_footer.set_attr_map({None: style_name})
+                    self.browser_header.set_attr_map({None: style_name})
+                    self.display_widget.set_attr_map({None: style_name})
             
             elif self.status == Browser.REQUEST_FAILED:
                 self.browser_body = self.make_request_failed_widget()
@@ -425,6 +462,9 @@ class Browser:
         self.attr_maps = []
         self.status = Browser.DISCONECTED
         self.response_progress = 0
+        self.response_speed = None
+        self.progress_updated_at = None
+        self.previous_progress = 0
         self.response_size = None
         self.response_transfer_size = None
 
@@ -535,6 +575,9 @@ class Browser:
 
             self.status = Browser.DONE
             self.response_progress = 0
+            self.response_speed = None
+            self.progress_updated_at = None
+            self.previous_progress = 0
             
         except Exception as e:
             RNS.log("An error occurred while handling file response. The contained exception was: "+str(e), RNS.LOG_ERROR)
@@ -584,6 +627,9 @@ class Browser:
             # Send the request
             self.status = Browser.REQUESTING
             self.response_progress = 0
+            self.response_speed = None
+            self.progress_updated_at = None
+            self.previous_progress = 0
             self.response_size = None
             self.response_transfer_size = None
             self.saved_file_name = None
@@ -750,9 +796,29 @@ class Browser:
             self.status = Browser.DONE
             self.page_data = cached
             self.markup = self.page_data.decode("utf-8")
-            self.attr_maps = markup_to_attrmaps(self.markup, url_delegate=self)
+            
+            self.page_background_color = None
+            bgpos = self.markup.find("#!bg=")
+            if bgpos:
+                endpos = self.markup.find("\n", bgpos)
+                if endpos-(bgpos+5) == 3:
+                    bg = self.markup[bgpos+5:endpos]
+                    self.page_background_color = bg
+
+            self.page_foreground_color = None
+            fgpos = self.markup.find("#!fg=")
+            if fgpos:
+                endpos = self.markup.find("\n", fgpos)
+                if endpos-(fgpos+5) == 3:
+                    fg = self.markup[fgpos+5:endpos]
+                    self.page_foreground_color = fg
+
+            self.attr_maps = markup_to_attrmaps(self.markup, url_delegate=self, fg_color=self.page_foreground_color, bg_color=self.page_background_color)
             
             self.response_progress = 0
+            self.response_speed = None
+            self.progress_updated_at = None
+            self.previous_progress = 0
             self.response_size = None
             self.response_transfer_size = None
             self.saved_file_name = None
@@ -797,9 +863,29 @@ class Browser:
                 self.status = Browser.DONE
                 self.page_data = page_data
                 self.markup = self.page_data.decode("utf-8")
-                self.attr_maps = markup_to_attrmaps(self.markup, url_delegate=self)
+                
+                self.page_background_color = None
+                bgpos = self.markup.find("#!bg=")
+                if bgpos:
+                    endpos = self.markup.find("\n", bgpos)
+                    if endpos-(bgpos+5) == 3:
+                        bg = self.markup[bgpos+5:endpos]
+                        self.page_background_color = bg
+
+                self.page_foreground_color = None
+                fgpos = self.markup.find("#!fg=")
+                if fgpos:
+                    endpos = self.markup.find("\n", fgpos)
+                    if endpos-(fgpos+5) == 3:
+                        fg = self.markup[fgpos+5:endpos]
+                        self.page_foreground_color = fg
+
+                self.attr_maps = markup_to_attrmaps(self.markup, url_delegate=self, fg_color=self.page_foreground_color, bg_color=self.page_background_color)
                 
                 self.response_progress = 0
+                self.response_speed = None
+                self.progress_updated_at = None
+                self.previous_progress = 0
                 self.response_size = None
                 self.response_transfer_size = None
                 self.saved_file_name = None
@@ -866,6 +952,9 @@ class Browser:
         # Send the request
         self.status = Browser.REQUESTING
         self.response_progress = 0
+        self.response_speed = None
+        self.progress_updated_at = None
+        self.previous_progress = 0
         self.response_size = None
         self.response_transfer_size = None
         self.saved_file_name = None
@@ -911,6 +1000,9 @@ class Browser:
     def link_establishment_timeout(self):
         self.status = Browser.LINK_TIMEOUT
         self.response_progress = 0
+        self.response_speed = None
+        self.progress_updated_at = None
+        self.previous_progress = 0
         self.response_size = None
         self.response_transfer_size = None
         self.link = None
@@ -923,8 +1015,28 @@ class Browser:
             self.status = Browser.DONE
             self.page_data = request_receipt.response
             self.markup = self.page_data.decode("utf-8")
-            self.attr_maps = markup_to_attrmaps(self.markup, url_delegate=self)
+
+            self.page_background_color = None
+            bgpos = self.markup.find("#!bg=")
+            if bgpos:
+                endpos = self.markup.find("\n", bgpos)
+                if endpos-(bgpos+5) == 3:
+                    bg = self.markup[bgpos+5:endpos]
+                    self.page_background_color = bg
+
+            self.page_foreground_color = None
+            fgpos = self.markup.find("#!fg=")
+            if fgpos:
+                endpos = self.markup.find("\n", fgpos)
+                if endpos-(fgpos+5) == 3:
+                    fg = self.markup[fgpos+5:endpos]
+                    self.page_foreground_color = fg
+
+            self.attr_maps = markup_to_attrmaps(self.markup, url_delegate=self, fg_color=self.page_foreground_color, bg_color=self.page_background_color)
             self.response_progress = 0
+            self.response_speed = None
+            self.progress_updated_at = None
+            self.previous_progress = 0
             self.loaded_from_cache = False
 
             # Simple header handling. Should be expanded when more
@@ -1036,25 +1148,41 @@ class Browser:
 
     def file_received(self, request_receipt):
         try:
-            file_name = request_receipt.response[0]
-            file_data = request_receipt.response[1]
-            file_destination_name = file_name.split("/")
-            file_destination_name = file_destination_name[len(file_destination_name)-1]
-            file_destination = self.app.downloads_path+"/"+file_destination_name
+            if type(request_receipt.response) == io.BufferedReader:
+                if request_receipt.metadata != None:
+                    file_name   = os.path.basename(request_receipt.metadata["name"].decode("utf-8"))
+                    file_handle = request_receipt.response
+                    file_destination = self.app.downloads_path+"/"+file_name
 
-            
-            counter = 0
-            while os.path.isfile(file_destination):
-                counter += 1
-                file_destination = self.app.downloads_path+"/"+file_name+"."+str(counter)
+                    counter = 0
+                    while os.path.isfile(file_destination):
+                        counter += 1
+                        file_destination = self.app.downloads_path+"/"+file_name+"."+str(counter)
 
-            fh = open(file_destination, "wb")
-            fh.write(file_data)
-            fh.close()
+                    shutil.move(file_handle.name, file_destination)
 
-            self.saved_file_name = file_destination.replace(self.app.downloads_path+"/", "", 1)
+            else:
+                file_name = request_receipt.response[0]
+                file_data = request_receipt.response[1]
+                file_destination_name = os.path.basename(file_name)
+                file_destination = self.app.downloads_path+"/"+file_destination_name
+
+                counter = 0
+                while os.path.isfile(file_destination):
+                    counter += 1
+                    file_destination = self.app.downloads_path+"/"+file_destination_name+"."+str(counter)
+
+                fh = open(file_destination, "wb")
+                fh.write(file_data)
+                fh.close()
+
+                self.saved_file_name = file_destination.replace(self.app.downloads_path+"/", "", 1)
+                    
             self.status = Browser.DONE
             self.response_progress = 0
+            self.response_speed = None
+            self.progress_updated_at = None
+            self.previous_progress = 0
 
             self.update_display()
         except Exception as e:
@@ -1066,6 +1194,9 @@ class Browser:
             if request_receipt.request_id == self.last_request_id:
                 self.status = Browser.REQUEST_FAILED
                 self.response_progress = 0
+                self.response_speed = None
+                self.progress_updated_at = None
+                self.previous_progress = 0
                 self.response_size = None
                 self.response_transfer_size = None
 
@@ -1078,6 +1209,9 @@ class Browser:
         else:
             self.status = Browser.REQUEST_FAILED
             self.response_progress = 0
+            self.response_speed = None
+            self.progress_updated_at = None
+            self.previous_progress = 0
             self.response_size = None
             self.response_transfer_size = None
 
@@ -1092,6 +1226,9 @@ class Browser:
     def request_timeout(self, request_receipt=None):
         self.status = Browser.REQUEST_TIMEOUT
         self.response_progress = 0
+        self.response_speed = None
+        self.progress_updated_at = None
+        self.previous_progress = 0
         self.response_size = None
         self.response_transfer_size = None
 
@@ -1108,6 +1245,17 @@ class Browser:
         self.response_time          = request_receipt.get_response_time()
         self.response_size          = request_receipt.response_size
         self.response_transfer_size = request_receipt.response_transfer_size
+        
+        now = time.time()
+        if self.progress_updated_at == None: self.progress_updated_at = now
+        if now > self.progress_updated_at+1:
+            td = now - self.progress_updated_at
+            pd = self.response_progress - self.previous_progress
+            bd = pd*self.response_size
+            self.response_speed = (bd/td)*8
+            self.previous_progress = self.response_progress
+            self.progress_updated_at = now
+
         self.update_display()
 
 
@@ -1158,8 +1306,14 @@ class Browser:
 
 
 class ResponseProgressBar(urwid.ProgressBar):
+    def __init__(self, empty, full, current=None, done=None, satt=None, owner=None):
+        super().__init__(empty, full, current=current, done=done, satt=satt)
+        self.owner = owner
+
     def get_text(self):
-        return "Receiving response "+super().get_text()
+        if self.owner.response_speed: speed_str = " "+RNS.prettyspeed(self.owner.response_speed)
+        else: speed_str = ""
+        return "Receiving response "+super().get_text().replace(" %", "%")+speed_str
 
 # A convenience function for printing a human-
 # readable file size
