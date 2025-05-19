@@ -22,7 +22,8 @@ WORKDIR /app
 RUN pip3 install -e .
 
 RUN mkdir -p /home/nonroot/.reticulum /home/nonroot/.nomadnetwork && \
-    chown -R 65532:65532 /home/nonroot
+    chown -R 65532:65532 /home/nonroot && \
+    chmod -R 755 /home/nonroot/.nomadnetwork
 
 FROM cgr.dev/chainguard/python:latest
 
