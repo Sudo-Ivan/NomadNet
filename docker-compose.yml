@@ -5,8 +5,8 @@ services:
     image: ghcr.io/sudo-ivan/nomadnet:master
     container_name: nomadnet
     volumes:
-      - ./nomadnetconfig:/home/nonroot/.nomadnetwork
-      - ./reticulumconfig:/home/nonroot/.reticulum
+      - ./nomadnet:/home/nonroot/.nomadnetwork
+      - ./reticulum:/home/nonroot/.reticulum
     deploy:
       resources:
         limits:
