@@ -14,8 +14,8 @@ docker pull ghcr.io/sudo-ivan/nomadnet:master
 ```
 
 ```
-mkdir -p nomadnetconfig reticulumconfig
-chown -R 65532:65532 nomadnetconfig reticulumconfig
+mkdir -p nomadnet reticulum
+chown -R 65532:65532 nomadnet reticulum
 docker-compose up -d
 ```
 
