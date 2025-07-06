@@ -1,0 +1,24 @@
+[project]
+name = "nomadnet"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Ivan",email = "ivan@quad4.io"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "rns (>=0.9.6,<0.10.0)",
+    "lxmf (>=0.7.1,<0.8.0)",
+    "urwid (>=3.0.2,<4.0.0)",
+    "safety (>=3.5.2,<4.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.12.2"
+
