@@ -1,13 +1,13 @@
 # Ivans Fork
 
-Only for serving as servers and rendering static Micron pages.
+```
+pipx install git+https://github.com/Sudo-Ivan/NomadNet
+```
 
 Image: `ghcr.io/sudo-ivan/nomadnet:master`
 
-1. Use Chainguard Python images
-2. Use non-root user
-3. Set resource limits (compose)
-4. Add docker-compose
+1. Use Chainguard Python images (smaller and rootless images)
+2. Code cleanup and formatting (ruff) 
 
 ```
 docker pull ghcr.io/sudo-ivan/nomadnet:master
