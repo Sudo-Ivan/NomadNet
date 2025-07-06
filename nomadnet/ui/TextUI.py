@@ -1,10 +1,11 @@
-import RNS
-import urwid
 import os
 import platform
 
-from nomadnet.ui.textui import *
+import RNS
+import urwid
+
 from nomadnet import NomadNetworkApp
+from nomadnet.ui.textui import *
 
 COLORMODE_MONO = 1
 COLORMODE_16   = 16
@@ -100,7 +101,7 @@ THEMES = {
             ("placeholder",                 "light gray", "default",               "default",                  "#999", "default"),
             ("placeholder_text",            "light gray", "default",               "default",                  "#999", "default"),
             ("error",                       "dark red,blink", "default",           "blink",                    "#a22,blink", "default"),
-        ],        
+        ],
     }
 }
 
@@ -152,12 +153,12 @@ class TextUI:
         self.restore_ixon = False
 
         try:
-            rval = os.system("stty -a | grep \"\\-ixon\"")
-            if rval == 0:
+            # Check if ixon is already disabled
+            result = subprocess.run(["stty", "-a"], capture_output=True, text=True, check=True)
+            if "-ixon" in result.stdout:
                 pass
-
             else:
-                os.system("stty -ixon")
+                subprocess.run(["stty", "-ixon"], check=True)
                 self.restore_ixon = True
 
         except Exception as e:
@@ -192,9 +193,9 @@ class TextUI:
 
         self.screen = urwid.raw_display.Screen()
         self.screen.register_palette(self.palette)
-        
+
         self.main_display = Main.MainDisplay(self, self.app)
-        
+
         if intro_timeout > 0:
             self.intro_display = Extras.IntroDisplay(self.app)
             initial_widget = self.intro_display.widget
@@ -229,7 +230,7 @@ class TextUI:
     def set_colormode(self, colormode):
         self.colormode = colormode
         self.screen.set_terminal_properties(colormode)
-        
+
         if self.colormode < 256:
             self.screen.reset_default_terminal_palette()
             self.restore_palette = True

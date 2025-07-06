@@ -107,7 +107,7 @@ class Scrollable(urwid.WidgetDecoration):
             if canv_full.cursor is not None:
                 # Full canvas contains the cursor, but scrolled out of view
                 self._forward_keypress = False
-                
+
                 # Reset cursor position on page/up down scrolling
                 try:
                     if hasattr(ow, "automove_cursor_on_scroll") and ow.automove_cursor_on_scroll:
@@ -142,10 +142,10 @@ class Scrollable(urwid.WidgetDecoration):
                                         else:
                                             if hasattr(no, "key_timeout"):
                                                 st = no
-                                    
+
                                     if st and hasattr(st, "key_timeout") and hasattr(st, "keypress") and callable(st.keypress):
                                         st.keypress(None, None)
-                                    
+
                                     break
 
                             pwi += 1

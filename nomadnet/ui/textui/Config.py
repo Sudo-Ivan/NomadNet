@@ -1,5 +1,7 @@
-import urwid
 import platform
+
+import urwid
+
 
 class ConfigDisplayShortcuts():
     def __init__(self, app):
@@ -18,7 +20,7 @@ class ConfigFiller(urwid.WidgetWrap):
     def keypress(self, size, key):
         if key == "up":
             self.app.ui.main_display.frame.focus_position = "header"
-            
+
         return super(ConfigFiller, self).keypress(size, key)
 
 class ConfigDisplay():

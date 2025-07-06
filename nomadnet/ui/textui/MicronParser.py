@@ -1,8 +1,10 @@
-import nomadnet
-import urwid
 import time
-from urwid.util import is_mouse_press
+
+import urwid
 from urwid.text_layout import calc_coords
+from urwid.util import is_mouse_press
+
+import nomadnet
 
 DEFAULT_FG_DARK  = "ddd"
 DEFAULT_FG_LIGHT = "222"
@@ -31,8 +33,10 @@ SECTION_INDENT = 2
 INDENT_RIGHT   = 1
 
 def default_state(fg=None, bg=None):
-    if fg == None: fg = SELECTED_STYLES["plain"]["fg"]
-    if bg == None: bg = DEFAULT_BG
+    if fg is None:
+        fg = SELECTED_STYLES["plain"]["fg"]
+    if bg is None:
+        bg = DEFAULT_BG
     state = {
         "literal": False,
         "depth": 0,
@@ -61,9 +65,12 @@ def markup_to_attrmaps(markup, url_delegate = None, fg_color=None, bg_color=None
 
     attrmaps = []
 
-    fgc = None; bgc = DEFAULT_BG
-    if bg_color != None: bgc = bg_color
-    if fg_color != None: fgc = fg_color
+    fgc = None
+    bgc = DEFAULT_BG
+    if bg_color is not None:
+        bgc = bg_color
+    if fg_color is not None:
+        fgc = fg_color
 
     state = default_state(fgc, bgc)
 
@@ -76,8 +83,8 @@ def markup_to_attrmaps(markup, url_delegate = None, fg_color=None, bg_color=None
             display_widgets = parse_line(line, state, url_delegate)
         else:
             display_widgets = [urwid.Text("")]
-        
-        if display_widgets != None and len(display_widgets) != 0:
+
+        if display_widgets is not None and len(display_widgets) != 0:
             for display_widget in display_widgets:
                 attrmap = urwid.AttrMap(display_widget, make_style(state))
                 attrmaps.append(attrmap)
@@ -116,7 +123,7 @@ def parse_line(line, state, url_delegate):
                 while i < len(line) and line[i] == ">":
                     i += 1
                     state["depth"] = i
-                
+
                     for j in range(1, i+1):
                         wanted_style = "heading"+str(i)
                         if wanted_style in SELECTED_STYLES:
@@ -129,7 +136,7 @@ def parse_line(line, state, url_delegate):
 
                     heading_style = make_style(state)
                     output = make_output(state, line, url_delegate)
-                    
+
                     style_to_state(latched_style, state)
 
                     if len(output) > 0:
@@ -147,6 +154,8 @@ def parse_line(line, state, url_delegate):
             elif first_char == "-":
                 if len(line) == 2:
                     divider_char = line[1]
+                    if ord(divider_char) < 32:
+                        divider_char = "\u2500"
                 else:
                     divider_char = "\u2500"
                 if state["depth"] == 0:
@@ -156,7 +165,7 @@ def parse_line(line, state, url_delegate):
 
         output = make_output(state, line, url_delegate, pre_escape)
 
-        if output != None:
+        if output is not None:
             text_only = True
             for o in output:
                 if not isinstance(o, tuple):
@@ -167,7 +176,7 @@ def parse_line(line, state, url_delegate):
                 widgets = []
                 for o in output:
                     if isinstance(o, tuple):
-                        if url_delegate != None:
+                        if url_delegate is not None:
                             tw = LinkableText(o, align=state["align"], delegate=url_delegate)
                             tw.in_columns = True
                         else:
@@ -189,7 +198,7 @@ def parse_line(line, state, url_delegate):
                             fv = o["value"]
                             flabel = o["label"]
                             fs = o["style"]
-                            fprechecked = o.get("prechecked", False)  
+                            fprechecked = o.get("prechecked", False)
                             f = urwid.CheckBox(flabel, state=fprechecked)
                             f.field_name = fn
                             f.field_value = fv
@@ -200,7 +209,7 @@ def parse_line(line, state, url_delegate):
                             fv = o["value"]
                             flabel = o["label"]
                             fs = o["style"]
-                            fprechecked = o.get("prechecked", False)  
+                            fprechecked = o.get("prechecked", False)
                             if "radio_groups" not in state:
                                 state["radio_groups"] = {}
                             if fn not in state["radio_groups"]:
@@ -220,7 +229,7 @@ def parse_line(line, state, url_delegate):
                 # text_widget = urwid.Text("<"+output+">", align=state["align"])
 
             else:
-                if url_delegate != None:
+                if url_delegate is not None:
                     text_widget = LinkableText(output, align=state["align"], delegate=url_delegate)
                 else:
                     text_widget = urwid.Text(output, align=state["align"])
@@ -247,15 +256,15 @@ def state_to_style(state):
     return { "fg": state["fg_color"], "bg": state["bg_color"], "bold": state["formatting"]["bold"], "underline": state["formatting"]["underline"], "italic": state["formatting"]["italic"] }
 
 def style_to_state(style, state):
-    if style["fg"] != None:
+    if style["fg"] is not None:
         state["fg_color"] = style["fg"]
-    if style["bg"] != None:
+    if style["bg"] is not None:
         state["bg_color"] = style["bg"]
-    if style["bold"] != None:
+    if style["bold"] is not None:
         state["formatting"]["bold"] = style["bold"]
-    if style["underline"] != None:
+    if style["underline"] is not None:
         state["formatting"]["underline"] = style["underline"]
-    if style["italic"] != None:
+    if style["italic"] is not None:
         state["formatting"]["italic"] = style["italic"]
 
 def make_style(state):
@@ -394,14 +403,14 @@ def make_style(state):
                         return "default"
 
                     return "g"+v1+v2
-                
+
                 else:
                     try:
                         v1 = parseval_hex(color[0])
                         v2 = parseval_hex(color[1])
                         v3 = parseval_hex(color[2])
                         color = v1+v2+v3
-                        
+
                     except Exception:
                         return "default"
 
@@ -429,7 +438,7 @@ def make_style(state):
     if name not in SYNTH_STYLES:
         screen = nomadnet.NomadNetworkApp.get_shared_instance().ui.screen
         screen.register_palette_entry(name, low_color(fg)+format_string,low_color(bg),mono_color(fg, bg)+format_string,high_color(fg)+format_string,high_color(bg))
-        
+
         synth_spec = screen._palette[name]
         SYNTH_STYLES.append(name)
         if name not in SYNTH_SPECS:
@@ -476,7 +485,7 @@ def make_output(state, line, url_delegate, pre_escape=False):
                     elif c == "b":
                         state["bg_color"] = state["default_bg"]
                     elif c == "`":
-                        state["formatting"]["bold"]      = False 
+                        state["formatting"]["bold"]      = False
                         state["formatting"]["underline"] = False
                         state["formatting"]["italic"]    = False
                         state["fg_color"] = state["default_fg"]
@@ -517,7 +526,7 @@ def make_output(state, line, url_delegate, pre_escape=False):
                                 field_name = field_content
                                 field_value = ""
                                 field_data = ""
-                                field_prechecked = False  
+                                field_prechecked = False
 
                                 # check if field_content contains '|'
                                 if '|' in field_content:
@@ -593,7 +602,7 @@ def make_output(state, line, url_delegate, pre_escape=False):
                         except Exception:
                             pass
 
-                    
+
                     elif c == "[":
                         endpos = line[i:].find("]")
                         if endpos == -1:
@@ -644,7 +653,7 @@ def make_output(state, line, url_delegate, pre_escape=False):
                                 elif cm == 2**24:
                                     orig_spec = speclist[4]
 
-                                if url_delegate != None:
+                                if url_delegate is not None:
                                     linkspec = LinkSpec(link_url, orig_spec)
                                     if link_fields != "":
                                         lf = link_fields.split("|")
@@ -653,9 +662,9 @@ def make_output(state, line, url_delegate, pre_escape=False):
 
                                     output.append((linkspec, link_label))
                                 else:
-                                    output.append(make_part(state, link_label)) 
+                                    output.append(make_part(state, link_label))
 
-                                
+
 
                     mode = "text"
                     if len(part) > 0:
@@ -711,11 +720,11 @@ class LinkableText(urwid.Text):
         self._cursor_position = 0
         self.key_timeout = 3
         self.in_columns = False
-        if self.delegate != None:
+        if self.delegate is not None:
             self.delegate.last_keypress = 0
 
     def handle_link(self, link_target, link_fields):
-        if self.delegate != None:
+        if self.delegate is not None:
             self.delegate.handle_link(link_target, link_fields)
 
     def find_next_part_pos(self, pos, part_positions):
@@ -745,12 +754,12 @@ class LinkableText(urwid.Text):
 
     def peek_link(self):
         item = self.find_item_at_pos(self._cursor_position)
-        if item != None:
+        if item is not None:
             if isinstance(item, LinkSpec):
-                if self.delegate != None:
+                if self.delegate is not None:
                     self.delegate.marked_link(item.link_target)
             else:
-                if self.delegate != None:
+                if self.delegate is not None:
                     self.delegate.marked_link(None)
 
 
@@ -765,25 +774,25 @@ class LinkableText(urwid.Text):
             total += length
 
 
-        if self.delegate != None:
+        if self.delegate is not None:
             self.delegate.last_keypress = time.time()
             self._invalidate()
             nomadnet.NomadNetworkApp.get_shared_instance().ui.loop.set_alarm_in(self.key_timeout, self.kt_event)
 
         if self._command_map[key] == urwid.ACTIVATE:
             item = self.find_item_at_pos(self._cursor_position)
-            if item != None:
+            if item is not None:
                 if isinstance(item, LinkSpec):
                     self.handle_link(item.link_target, item.link_fields)
 
         elif key == "up":
             self._cursor_position = 0
             return key
-        
+
         elif key == "down":
             self._cursor_position = 0
             return key
-        
+
         elif key == "right":
             old = self._cursor_position
             self._cursor_position = self.find_next_part_pos(self._cursor_position, part_positions)
@@ -796,7 +805,7 @@ class LinkableText(urwid.Text):
                     return "down"
 
             self._invalidate()
-        
+
         elif key == "left":
             if self._cursor_position > 0:
                 if self.in_columns:
@@ -806,7 +815,7 @@ class LinkableText(urwid.Text):
                     self._invalidate()
 
             else:
-                if self.delegate != None:
+                if self.delegate is not None:
                     self.delegate.micron_released_focus()
 
         else:
@@ -819,10 +828,10 @@ class LinkableText(urwid.Text):
         now = time.time()
         c = super().render(size, focus)
 
-        if focus and (self.delegate == None or now < self.delegate.last_keypress+self.key_timeout):
+        if focus and (self.delegate is None or now < self.delegate.last_keypress+self.key_timeout):
             c = urwid.CompositeCanvas(c)
             c.cursor = self.get_cursor_coords(size)
-            if self.delegate != None:
+            if self.delegate is not None:
                 self.peek_link()
 
         return c
@@ -870,14 +879,14 @@ class LinkableText(urwid.Text):
                 self._cursor_position = pos
                 item = self.find_item_at_pos(self._cursor_position)
 
-                if item != None:
+                if item is not None:
                     if isinstance(item, LinkSpec):
                         self.handle_link(item.link_target, item.link_fields)
 
                 self._invalidate()
                 self._emit("change")
-                
+
                 return True
-            
+
         except Exception:
             return False

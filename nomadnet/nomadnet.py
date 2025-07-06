@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-from ._version import __version__
-
 import argparse
+
 import nomadnet
+
+from ._version import __version__
 
 
 def program_setup(configdir, rnsconfigdir, daemon, console):
@@ -23,7 +24,7 @@ def main():
         parser.add_argument("-d", "--daemon", action="store_true", default=False, help="run Nomad Network in daemon mode")
         parser.add_argument("-c", "--console", action="store_true", default=False, help="in daemon mode, log to console instead of file")
         parser.add_argument("--version", action="version", version="Nomad Network Client {version}".format(version=__version__))
-        
+
         args = parser.parse_args()
 
         if args.config:

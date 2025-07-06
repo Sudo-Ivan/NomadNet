@@ -1,9 +1,12 @@
 import os
-import RNS
-import time
-import nomadnet
 import threading
+import time
+
+import RNS
 import RNS.vendor.umsgpack as msgpack
+
+import nomadnet
+
 
 class PNAnnounceHandler:
     def __init__(self, owner):
@@ -42,7 +45,7 @@ class Directory:
 
                 app.directory.node_announce_received(destination_hash, app_data, associated_peer)
                 app.autoselect_propagation_node()
-                
+
             else:
                 RNS.log("Ignored announce from "+RNS.prettyhexrep(destination_hash), RNS.LOG_DEBUG)
 
@@ -136,7 +139,7 @@ class Directory:
 
                         for a in remove_announces:
                             self.announce_stream.remove(a)
-                    
+
                     except Exception as e:
                         RNS.log("An error occurred while compacting the announce stream. The contained exception was:"+str(e), RNS.LOG_ERROR)
 
@@ -161,7 +164,7 @@ class Directory:
 
                         for a in remove_announces:
                             self.announce_stream.remove(a)
-                    
+
                     except Exception as e:
                         RNS.log("An error occurred while compacting the announce stream. The contained exception was:"+str(e), RNS.LOG_ERROR)
 
@@ -175,7 +178,7 @@ class Directory:
                     if not existing_entry:
                         node_entry = DirectoryEntry(source_hash, display_name=app_data.decode("utf-8"), trust_level=DirectoryEntry.TRUSTED, hosts_node=True)
                         self.remember(node_entry)
-                
+
                 if hasattr(self.app.ui, "main_display"):
                     self.app.ui.main_display.sub_displays.network_display.directory_change_callback()
 
@@ -202,7 +205,7 @@ class Directory:
 
                         for a in remove_announces:
                             self.announce_stream.remove(a)
-                    
+
                     except Exception as e:
                         RNS.log("An error occurred while compacting the announce stream. The contained exception was:"+str(e), RNS.LOG_ERROR)
 
@@ -210,7 +213,7 @@ class Directory:
                 self.announce_stream.insert(0, (timestamp, source_hash, app_data, "pn"))
                 while len(self.announce_stream) > Directory.ANNOUNCE_STREAM_MAXLENGTH:
                     self.announce_stream.pop()
-                
+
                 if hasattr(self.app, "ui") and hasattr(self.app.ui, "main_display"):
                     self.app.ui.main_display.sub_displays.network_display.directory_change_callback()
 
@@ -336,7 +339,7 @@ class Directory:
         if source_hash in self.directory_entries:
             entry = self.directory_entries[source_hash]
             entry.identify = state
-    
+
     def known_nodes(self):
         node_list = []
         for eh in self.directory_entries:

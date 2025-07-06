@@ -1,14 +1,15 @@
 import RNS
+import urwid
 
-from .Network import *
+from .Config import *
 from .Conversations import *
 from .Directory import *
-from .Config import *
-from .Interfaces import *
-from .Map import *
-from .Log import *
 from .Guide import *
-import urwid
+from .Interfaces import *
+from .Log import *
+from .Map import *
+from .Network import *
+
 
 class SubDisplays():
     def __init__(self, app):
@@ -56,9 +57,8 @@ class MainFrame(urwid.Frame):
         self.current_focus = current_focus
 
     def focus_changed(self):
-        current_focus = self.delegate.widget.get_focus_widgets()[-1]
         current_focus_path = self.delegate.widget.get_focus_path()
-        
+
         if len(current_focus_path) > 1:
             if current_focus_path[0] == "body":
                 self.delegate.update_active_shortcuts()
@@ -77,7 +77,7 @@ class MainFrame(urwid.Frame):
 
     def keypress(self, size, key):
         self.keypress_focus_check()
-        
+
         #if key == "ctrl q":
         #    raise urwid.ExitMainLoop
 
@@ -140,7 +140,7 @@ class MainDisplay():
 
     def request_redraw(self, extra_delay=0.0):
         self.app.ui.loop.set_alarm_in(0.25+extra_delay, self.redraw_now)
-    
+
     def redraw_now(self, sender=None, data=None):
         self.app.ui.loop.screen.clear()
         #self.app.ui.loop.draw_screen()
@@ -151,10 +151,10 @@ class MainDisplay():
     def quit(self, sender=None):
         logterm_pid = None
         if True or RNS.vendor.platformutils.is_android():
-            if self.sub_displays.log_display != None and self.sub_displays.log_display.log_term != None:
-                if self.sub_displays.log_display.log_term.log_term != None:
+            if self.sub_displays.log_display is not None and self.sub_displays.log_display.log_term is not None:
+                if self.sub_displays.log_display.log_term.log_term is not None:
                     logterm_pid = self.sub_displays.log_display.log_term.log_term.pid
-                    if logterm_pid != None:
+                    if logterm_pid is not None:
                         import os
                         import signal
                         os.kill(logterm_pid, signal.SIGKILL)
@@ -182,8 +182,6 @@ class MenuDisplay():
         menu_text             = (urwid.PACK, self.menu_indicator)
         button_network        = (11, MenuButton("Network", on_press=handler.show_network))
         button_conversations  = (17, MenuButton("Conversations", on_press=handler.show_conversations))
-        button_directory      = (13, MenuButton("Directory", on_press=handler.show_directory))
-        button_map            = (7,  MenuButton("Map", on_press=handler.show_map))
         button_log            = (7,  MenuButton("Log", on_press=handler.show_log))
         button_config         = (10, MenuButton("Config", on_press=handler.show_config))
         button_interfaces     = (14, MenuButton("Interfaces", on_press=handler.show_interfaces))

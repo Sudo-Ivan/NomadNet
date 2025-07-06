@@ -1,6 +1,8 @@
-import os
 import glob
+import os
+
 import RNS
+
 import nomadnet
 
 modules = glob.glob(os.path.dirname(__file__)+"/*.py")

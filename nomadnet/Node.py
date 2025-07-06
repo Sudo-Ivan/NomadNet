@@ -1,9 +1,10 @@
 import os
+import subprocess
+import threading
+import time
 
 import RNS
-import time
-import threading
-import subprocess
+
 
 class Node:
     JOB_INTERVAL = 5
@@ -108,7 +109,7 @@ class Node:
         try:
             self.app.peer_settings["served_page_requests"] += 1
             self.app.save_peer_settings()
-            
+
         except Exception:
             RNS.log("Could not increase served page request count", RNS.LOG_ERROR)
 
@@ -193,7 +194,7 @@ class Node:
         try:
             self.app.peer_settings["served_file_requests"] += 1
             self.app.save_peer_settings()
-            
+
         except Exception:
             RNS.log("Could not increase served file request count", RNS.LOG_ERROR)
 
@@ -222,10 +223,10 @@ class Node:
     def __jobs(self):
         while self.should_run_jobs:
             now = time.time()
-            
+
             if now > self.last_announce + self.announce_interval*60:
                 self.announce()
-                
+
             if self.page_refresh_interval > 0:
                 if now > self.last_page_refresh + self.page_refresh_interval*60:
                     self.register_pages()

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+
 env_string = ""
 for e in os.environ:
   env_string += "{}={}\n".format(e, os.environ[e])

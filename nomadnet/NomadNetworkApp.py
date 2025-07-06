@@ -1,25 +1,26 @@
-import os
-import io
-import sys
-import time
-import shlex
 import atexit
-import threading
-import traceback
-import subprocess
 import contextlib
-
-import RNS
-import LXMF
-import nomadnet
-
-from nomadnet.Directory import DirectoryEntry
+import io
+import os
+import shlex
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+import traceback
 from datetime import datetime
 
+import LXMF
+import RNS
 import RNS.vendor.umsgpack as msgpack
+from RNS.vendor.configobj import ConfigObj
+
+import nomadnet
+from nomadnet.Directory import DirectoryEntry
 
 from ._version import __version__
-from RNS.vendor.configobj import ConfigObj
+
 
 class NomadNetworkApp:
     time_format      = "%Y-%m-%d %H:%M:%S"
@@ -44,7 +45,7 @@ class NomadNetworkApp:
         if hasattr(self.ui, "restore_ixon"):
             if self.ui.restore_ixon:
                 try:
-                    os.system("stty ixon")
+                    subprocess.run(["stty", "ixon"], check=True)
 
                 except Exception as e:
                     RNS.log("Could not restore flow control sequences. The contained exception was: "+str(e), RNS.LOG_WARNING)
@@ -134,7 +135,7 @@ class NomadNetworkApp:
         self.lxmf_sync_interval = 360*60
         self.lxmf_sync_limit    = 8
         self.compact_stream     = False
-        
+
         self.required_stamp_cost   = None
         self.accept_invalid_stamps = False
 
@@ -185,11 +186,11 @@ class NomadNetworkApp:
                     import shutil
                     examplespath = os.path.join(os.path.dirname(__file__), "examples")
                     shutil.copytree(examplespath, self.examplespath, ignore=shutil.ignore_patterns("__pycache__"))
-                
+
                 except Exception as e:
                     RNS.log("Could not copy examples into the "+self.examplespath+" directory.", RNS.LOG_ERROR)
                     RNS.log("The contained exception was: "+str(e), RNS.LOG_ERROR)
-            
+
             RNS.log("Could not load config file, creating default configuration file...")
             self.createDefaultConfig()
             self.firstrun = True
@@ -355,7 +356,7 @@ class NomadNetworkApp:
 
             if not self.disable_propagation:
                 RNS.log("LXMF Propagation Node started on: "+RNS.prettyhexrep(self.message_router.propagation_destination.hash))
-                
+
             self.node = nomadnet.Node(self)
         else:
             self.node = None
@@ -420,7 +421,7 @@ class NomadNetworkApp:
         RNS.log("Starting job scheduler now", RNS.LOG_DEBUG)
         while self.should_run_jobs:
             now = time.time()
-            
+
             if now > self.peer_settings["last_lxmf_sync"] + self.lxmf_sync_interval:
                 RNS.log("Initiating automatic LXMF sync", RNS.LOG_VERBOSE)
                 self.request_lxmf_sync(limit=self.lxmf_sync_limit)
@@ -550,7 +551,7 @@ class NomadNetworkApp:
         self.peer_settings["propagation_node"] = node_hash
         self.save_peer_settings()
         self.autoselect_propagation_node()
-    
+
     def get_default_propagation_node(self):
         return self.message_router.get_outbound_propagation_node()
 
@@ -582,7 +583,7 @@ class NomadNetworkApp:
         if self.print_messages:
             if self.print_all_messages:
                 return True
-            
+
             else:
                 source_hash_text = RNS.hexrep(message.source_hash, delimit=False)
 
@@ -625,7 +626,7 @@ class NomadNetworkApp:
                 received = time.time()
 
             g = self.ui.glyphs
-            
+
             m_rtime = datetime.fromtimestamp(message.timestamp)
             stime = m_rtime.strftime(self.time_format)
 
@@ -645,10 +646,9 @@ class NomadNetworkApp:
                 mbody=message.content_as_string(),
             )
 
-            filename = "/tmp/"+RNS.hexrep(RNS.Identity.full_hash(output.encode("utf-8")), delimit=False)
-            with open(filename, "wb") as f:
+            with tempfile.NamedTemporaryFile(delete=False, mode="wb", dir=self.tmpfilespath) as f:
+                filename = f.name
                 f.write(output.encode("utf-8"))
-                f.close()
 
             self.print_file(filename)
 
@@ -692,7 +692,7 @@ class NomadNetworkApp:
     def createDefaultConfig(self):
         self.config = ConfigObj(__default_nomadnet_config__)
         self.config.filename = self.configpath
-        
+
         if not os.path.isdir(self.configdir):
             os.makedirs(self.configdir)
         self.config.write()
@@ -749,7 +749,7 @@ class NomadNetworkApp:
                         self.lxmf_sync_interval = value
 
                 if option == "lxmf_sync_limit":
-                    value = self.config["client"].as_int(option)    
+                    value = self.config["client"].as_int(option)
 
                     if value > 0:
                         self.lxmf_sync_limit = value
@@ -775,7 +775,7 @@ class NomadNetworkApp:
                     self.accept_invalid_stamps = value
 
                 if option == "max_accepted_size":
-                    value = self.config["client"].as_float(option)    
+                    value = self.config["client"].as_float(option)
 
                     if value > 0:
                         self.lxmf_max_incoming_size = value
@@ -901,10 +901,10 @@ class NomadNetworkApp:
                 if value < 1:
                     value = 1
                 self.node_announce_interval = value
-                
+
             if "pages_path" in self.config["node"]:
                 self.pagespath = self.config["node"]["pages_path"]
-                
+
             if "page_refresh_interval" not in self.config["node"]:
                 self.page_refresh_interval = 0
             else:
@@ -912,11 +912,11 @@ class NomadNetworkApp:
                 if value < 0:
                     value = 0
                 self.page_refresh_interval = value
-                
+
 
             if "files_path" in self.config["node"]:
                 self.filespath = self.config["node"]["files_path"]
-                
+
             if "file_refresh_interval" not in self.config["node"]:
                 self.file_refresh_interval = 0
             else:
@@ -924,7 +924,7 @@ class NomadNetworkApp:
                 if value < 0:
                     value = 0
                 self.file_refresh_interval = value
-                
+
 
             if "prioritise_destinations" in self.config["node"]:
                 self.prioritised_lxmf_destinations = self.config["node"].as_list("prioritise_destinations")
@@ -935,7 +935,7 @@ class NomadNetworkApp:
                 self.static_peers = self.config["node"].as_list("static_peers")
             else:
                 self.static_peers = []
-                
+
             if "max_peers" not in self.config["node"]:
                 self.max_peers = None
             else:
@@ -975,13 +975,13 @@ class NomadNetworkApp:
                                 self.print_all_messages = True
 
                             if self.config["printing"]["print_from"].lower() == "trusted":
-                                
+
                                 self.print_all_messages = False
                                 self.print_trusted_messages = True
 
                             if len(self.config["printing"]["print_from"]) == (RNS.Identity.TRUNCATED_HASHLENGTH//8)*2:
                                 self.allowed_message_print_destinations.append(self.config["printing"]["print_from"])
-                        
+
                         if type(self.config["printing"]["print_from"]) == list:
                                 self.allowed_message_print_destinations =  self.config["printing"].as_list("print_from")
                                 for allowed_entry in self.allowed_message_print_destinations:
@@ -1001,7 +1001,7 @@ class NomadNetworkApp:
                             template_file.write(__printing_template_msg__.encode("utf-8"))
                             self.printing_template_msg = __printing_template_msg__
 
-              
+
     @staticmethod
     def get_shared_instance():
         if NomadNetworkApp._shared_instance != None:

@@ -6,11 +6,11 @@
 
 def recursively_replace(original, replacements, include_original_keys=False):
     """Clones an iterable and recursively replaces specific values."""
-    
-    # If this function would be called recursively, the parameters 'replacements' and 'include_original_keys' would have to be 
+
+    # If this function would be called recursively, the parameters 'replacements' and 'include_original_keys' would have to be
     # passed each time. Therefore, a helper function with a reduced parameter list is used for the recursion, which nevertheless
     # can access the said parameters.
-    
+
     def _recursion_helper(obj):
         #Determine if the object should be replaced. If it is not hashable, the search will throw a TypeError.
         try:

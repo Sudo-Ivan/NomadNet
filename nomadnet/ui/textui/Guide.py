@@ -1,8 +1,11 @@
 import urwid
+
 import nomadnet
 from nomadnet.vendor.additional_urwid_widgets import IndicativeListBox
-from .MicronParser import markup_to_attrmaps
 from nomadnet.vendor.Scrollable import *
+
+from .MicronParser import markup_to_attrmaps
+
 
 class GuideDisplayShortcuts():
     def __init__(self, app):
@@ -131,7 +134,7 @@ class TopicList(urwid.WidgetWrap):
     def keypress(self, size, key):
         if key == "up" and (self.ilb.first_item_is_selected()):
             nomadnet.NomadNetworkApp.get_shared_instance().ui.main_display.frame.focus_position = "header"
-            
+
         return super(TopicList, self).keypress(size, key)
 
 class GuideDisplay():

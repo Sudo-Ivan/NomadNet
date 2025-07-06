@@ -1,18 +1,20 @@
+import threading
+import time
+from datetime import datetime
+
 import RNS
 import urwid
+
 import nomadnet
-import time
-import threading
-from datetime import datetime
 from nomadnet.Directory import DirectoryEntry
 from nomadnet.vendor.additional_urwid_widgets import IndicativeListBox
 
 from .Browser import Browser
 
+
 class NetworkDisplayShortcuts():
     def __init__(self, app):
         self.app = app
-        g = app.ui.glyphs
 
         self.widget = urwid.AttrMap(urwid.Text("[C-l] Nodes/Announces  [C-x] Remove  [C-w] Disconnect  [C-d] Back  [C-f] Forward  [C-r] Reload  [C-u] URL  [C-g] Fullscreen  [C-s / C-b] Save Node"), "shortcutbar")
 
@@ -74,13 +76,13 @@ class AnnounceInfo(urwid.WidgetWrap):
 
         is_node = False
         is_pn   = False
-        if info_type == "node" or info_type == True:
+        if info_type == "node" or info_type is True:
             type_string = "Nomad Network Node " + g["node"]
             is_node = True
         elif info_type == "pn":
             type_string = "LXMF Propagation Node " + g["sent"]
             is_pn = True
-        elif info_type == "peer" or info_type == False:
+        elif info_type == "peer" or info_type is False:
             type_string = "Peer " + g["peer"]
 
         try:
@@ -107,11 +109,9 @@ class AnnounceInfo(urwid.WidgetWrap):
             style         = "list_trusted"
         elif trust_level == DirectoryEntry.WARNING:
             trust_str     = "Warning"
-            symbol        = g["warning"]
             style         = "list_warning"
         else:
             trust_str     = "Warning"
-            symbol        = g["warning"]
             style         = "list_untrusted"
 
         def show_announce_stream(sender):
@@ -251,10 +251,8 @@ class AnnounceInfo(urwid.WidgetWrap):
 
 class AnnounceStreamEntry(urwid.WidgetWrap):
     def __init__(self, app, announce, delegate):
-        full_time_format = "%Y-%m-%d %H:%M:%S"
         date_time_format = "%Y-%m-%d"
         time_time_format = "%H:%M:%S"
-        short_time_format = "%Y-%m-%d %H:%M"
         date_only_format = "%Y-%m-%d"
 
         timestamp = announce[0]
@@ -293,13 +291,12 @@ class AnnounceStreamEntry(urwid.WidgetWrap):
             style         = "list_warning"
             focus_style   = "list_focus"
         else:
-            symbol        = g["warning"]
             style         = "list_untrusted"
             focus_style   = "list_focus_untrusted"
 
-        if announce_type == "node" or announce_type == True:
+        if announce_type == "node" or announce_type is True:
             type_symbol = g["node"]
-        elif announce_type == "peer" or announce_type == False:
+        elif announce_type == "peer" or announce_type is False:
             type_symbol = g["peer"]
         elif announce_type == "pn":
             type_symbol = g["sent"]
@@ -424,7 +421,7 @@ class AnnounceStream(urwid.WidgetWrap):
         return super(AnnounceStream, self).keypress(size, key)
 
     def delete_selected_entry(self):
-        if self.ilb.get_selected_item() != None:
+        if self.ilb.get_selected_item() is not None:
             self.app.directory.remove_announce_with_timestamp(self.ilb.get_selected_item().original_widget.timestamp)
             self.rebuild_widget_list()
 
@@ -442,9 +439,9 @@ class AnnounceStream(urwid.WidgetWrap):
             announce_type = e[3]
 
             # Filter based on current tab
-            if self.current_tab == "nodes" and (announce_type == "node" or announce_type == True):
+            if self.current_tab == "nodes" and (announce_type == "node" or announce_type is True):
                 new_entries.append(e)
-            elif self.current_tab == "peers" and (announce_type == "peer" or announce_type == False):
+            elif self.current_tab == "peers" and (announce_type == "peer" or announce_type is False):
                 new_entries.append(e)
             elif self.current_tab == "pn" and announce_type == "pn":
                 new_entries.append(e)
@@ -547,24 +544,24 @@ class KnownNodeInfo(urwid.WidgetWrap):
         trust_str    = ""
         node_entry   = self.app.directory.find(source_hash)
         sort_str     = self.app.directory.sort_rank(source_hash)
-        if sort_str == None:
+        if sort_str is None:
             sort_str = "None"
         else:
             sort_str = str(sort_str)
 
-        if node_entry == None:
+        if node_entry is None:
             display_str = self.app.directory.simplest_display_str(source_hash)
         else:
             display_str = node_entry.display_name
 
         addr_str     = "<"+RNS.hexrep(source_hash, delimit=False)+">"
 
-        if display_str == None:
+        if display_str is None:
             display_str = addr_str
 
         pn_hash = RNS.Destination.hash_from_name_and_identity("lxmf.propagation", node_ident)
 
-        if node_ident != None:
+        if node_ident is not None:
             lxmf_addr_str = g["sent"]+" LXMF Propagation Node Address is "+RNS.prettyhexrep(pn_hash)
         else:
             lxmf_addr_str = "No associated Propagation Node known"
@@ -586,11 +583,9 @@ class KnownNodeInfo(urwid.WidgetWrap):
             style         = "list_trusted"
         elif trust_level == DirectoryEntry.WARNING:
             trust_str     = "Warning"
-            symbol        = g["warning"]
             style         = "list_warning"
         else:
             trust_str     = "Warning"
-            symbol        = g["warning"]
             style         = "list_untrusted"
 
         if trust_level == DirectoryEntry.UNTRUSTED:
@@ -633,7 +628,7 @@ class KnownNodeInfo(urwid.WidgetWrap):
 
         def msg_op(sender):
             show_known_nodes(None)
-            if node_ident != None:
+            if node_ident is not None:
                 try:
                     existing_conversations = nomadnet.Conversation.conversation_list(self.app)
 
@@ -670,10 +665,10 @@ class KnownNodeInfo(urwid.WidgetWrap):
                     self.app.set_user_selected_propagation_node(None)
 
             trust_level = DirectoryEntry.UNTRUSTED
-            if r_unknown.get_state() == True:
+            if r_unknown.get_state():
                 trust_level = DirectoryEntry.UNKNOWN
 
-            if r_trusted.get_state() == True:
+            if r_trusted.get_state():
                 trust_level = DirectoryEntry.TRUSTED
 
             display_str = e_name.get_edit_text()
@@ -879,11 +874,10 @@ class KnownNodes(urwid.WidgetWrap):
                 ]), title="?"
             )
             dialog.delegate = self.delegate
-            bottom = self
 
             overlay = urwid.Overlay(
                 dialog,
-                bottom,
+                self,
                 align=urwid.CENTER,
                 width=urwid.RELATIVE_100,
                 valign=urwid.MIDDLE,
@@ -920,8 +914,6 @@ class KnownNodes(urwid.WidgetWrap):
 class NodeEntry(urwid.WidgetWrap):
     def __init__(self, app, node, delegate):
         source_hash = node.source_hash
-        trust_level = node.trust_level
-
         self.app = app
         g = self.app.ui.glyphs
 
@@ -945,7 +937,6 @@ class NodeEntry(urwid.WidgetWrap):
             style         = "list_warning"
             focus_style   = "list_focus"
         else:
-            symbol        = g["warning"]
             style         = "list_untrusted"
             focus_style   = "list_focus_untrusted"
 
@@ -971,7 +962,7 @@ class AnnounceTime(urwid.WidgetWrap):
 
     def update_time(self):
         self.last_announce_string = "Never"
-        if self.app.peer_settings["last_announce"] != None:
+        if self.app.peer_settings["last_announce"] is not None:
             self.last_announce_string = pretty_date(int(self.app.peer_settings["last_announce"]))
 
         self.display_widget.set_text("Announced : "+self.last_announce_string)
@@ -1003,7 +994,7 @@ class NodeAnnounceTime(urwid.WidgetWrap):
 
     def update_time(self):
         self.last_announce_string = "Never"
-        if self.app.peer_settings["node_last_announce"] != None:
+        if self.app.peer_settings["node_last_announce"] is not None:
             self.last_announce_string = pretty_date(int(self.app.peer_settings["node_last_announce"]))
 
         self.display_widget.set_text("Last Announce  : "+self.last_announce_string)
@@ -1034,7 +1025,7 @@ class NodeActiveConnections(urwid.WidgetWrap):
 
     def update_stat(self):
         self.stat_string = "None"
-        if self.app.node != None:
+        if self.app.node is not None:
             self.stat_string = str(len(self.app.node.destination.links))
 
         self.display_widget.set_text("Connected Now  : "+self.stat_string)
@@ -1065,12 +1056,12 @@ class NodeStorageStats(urwid.WidgetWrap):
 
     def update_stat(self):
         self.stat_string = "None"
-        if self.app.node != None and not self.app.disable_propagation:
+        if self.app.node is not None and not self.app.disable_propagation:
 
             limit = self.app.message_router.message_storage_limit
             used = self.app.message_router.message_storage_size()
 
-            if limit != None and used != None:
+            if limit is not None and used is not None:
                 pct = round((used/limit)*100, 1)
                 pct_str = str(pct)+"%, "
                 limit_str = " of "+RNS.prettysize(limit)
@@ -1108,7 +1099,7 @@ class NodeTotalConnections(urwid.WidgetWrap):
 
     def update_stat(self):
         self.stat_string = "None"
-        if self.app.node != None:
+        if self.app.node is not None:
             self.stat_string = str(self.app.peer_settings["node_connects"])
 
         self.display_widget.set_text("Total Connects : "+self.stat_string)
@@ -1140,7 +1131,7 @@ class NodeTotalPages(urwid.WidgetWrap):
 
     def update_stat(self):
         self.stat_string = "None"
-        if self.app.node != None:
+        if self.app.node is not None:
             self.stat_string = str(self.app.peer_settings["served_page_requests"])
 
         self.display_widget.set_text("Served Pages   : "+self.stat_string)
@@ -1172,7 +1163,7 @@ class NodeTotalFiles(urwid.WidgetWrap):
 
     def update_stat(self):
         self.stat_string = "None"
-        if self.app.node != None:
+        if self.app.node is not None:
             self.stat_string = str(self.app.peer_settings["served_file_requests"])
 
         self.display_widget.set_text("Served Files   : "+self.stat_string)
@@ -1201,7 +1192,7 @@ class LocalPeer(urwid.WidgetWrap):
         g = self.app.ui.glyphs
         self.dialog_open = False
         display_name = self.app.lxmf_destination.display_name
-        if display_name == None:
+        if display_name is None:
             display_name = ""
 
         t_id =           urwid.Text("LXMF Addr : "+RNS.prettyhexrep(self.app.lxmf_destination.hash))
@@ -1222,7 +1213,6 @@ class LocalPeer(urwid.WidgetWrap):
                 ]), title=g["info"]
             )
             dialog.delegate = self
-            bottom = self
 
             #overlay = urwid.Overlay(dialog, bottom, align=urwid.CENTER, width=urwid.RELATIVE_100, valign=urwid.MIDDLE, height=urwid.PACK, left=4, right=4)
             overlay = dialog
@@ -1245,7 +1235,6 @@ class LocalPeer(urwid.WidgetWrap):
                 ]), title=g["info"]
             )
             dialog.delegate = self
-            bottom = self
 
             #overlay = urwid.Overlay(dialog, bottom, align=urwid.CENTER, width=urwid.RELATIVE_100, valign=urwid.MIDDLE, height=urwid.PACK, left=4, right=4)
             overlay = dialog
@@ -1258,7 +1247,7 @@ class LocalPeer(urwid.WidgetWrap):
             options = self.parent.left_pile.options(height_type=urwid.PACK, height_amount=None)
             self.parent.left_pile.contents[1] = (self.parent.node_info_display, options)
 
-        if LocalPeer.announce_timer == None:
+        if LocalPeer.announce_timer is None:
             self.t_last_announce = AnnounceTime(self.app)
             LocalPeer.announce_timer = self.t_last_announce
         else:
@@ -1312,12 +1301,12 @@ class NodeInfo(urwid.WidgetWrap):
             self.parent.left_pile.contents[1] = (LocalPeer(self.app, self.parent), options)
 
         if self.app.enable_node:
-            if self.app.node != None:
+            if self.app.node is not None:
                 display_name = self.app.node.name
             else:
                 display_name = None
 
-            if display_name == None:
+            if display_name is None:
                 display_name = ""
 
             t_id = urwid.Text("Addr : "+RNS.hexrep(self.app.node.destination.hash, delimit=False))
@@ -1344,7 +1333,6 @@ class NodeInfo(urwid.WidgetWrap):
                     ]), title=g["info"]
                 )
                 dialog.delegate = self
-                bottom = self
 
                 #overlay = urwid.Overlay(dialog, bottom, align=urwid.CENTER, width=urwid.RELATIVE_100, valign=urwid.MIDDLE, height=urwid.PACK, left=4, right=4)
                 overlay = dialog
@@ -1356,42 +1344,42 @@ class NodeInfo(urwid.WidgetWrap):
             def connect_query(sender):
                 self.parent.browser.retrieve_url(RNS.hexrep(self.app.node.destination.hash, delimit=False))
 
-            if NodeInfo.announce_timer == None:
+            if NodeInfo.announce_timer is None:
                 self.t_last_announce = NodeAnnounceTime(self.app)
                 NodeInfo.announce_timer = self.t_last_announce
             else:
                 self.t_last_announce = NodeInfo.announce_timer
                 self.t_last_announce.update_time()
 
-            if NodeInfo.links_timer == None:
+            if NodeInfo.links_timer is None:
                 self.t_active_links = NodeActiveConnections(self.app)
                 NodeInfo.links_timer = self.t_active_links
             else:
                 self.t_active_links = NodeInfo.links_timer
                 self.t_active_links.update_stat()
 
-            if NodeInfo.storage_timer == None:
+            if NodeInfo.storage_timer is None:
                 self.t_storage_stats = NodeStorageStats(self.app)
                 NodeInfo.storage_timer = self.t_storage_stats
             else:
                 self.t_storage_stats = NodeInfo.storage_timer
                 self.t_storage_stats.update_stat()
 
-            if NodeInfo.conns_timer == None:
+            if NodeInfo.conns_timer is None:
                 self.t_total_connections = NodeTotalConnections(self.app)
                 NodeInfo.conns_timer = self.t_total_connections
             else:
                 self.t_total_connections = NodeInfo.conns_timer
                 self.t_total_connections.update_stat()
 
-            if NodeInfo.pages_timer == None:
+            if NodeInfo.pages_timer is None:
                 self.t_total_pages = NodeTotalPages(self.app)
                 NodeInfo.pages_timer = self.t_total_pages
             else:
                 self.t_total_pages = NodeInfo.pages_timer
                 self.t_total_pages.update_stat()
 
-            if NodeInfo.files_timer == None:
+            if NodeInfo.files_timer is None:
                 self.t_total_files = NodeTotalFiles(self.app)
                 NodeInfo.files_timer = self.t_total_files
             else:
@@ -1463,7 +1451,7 @@ class NodeInfo(urwid.WidgetWrap):
         super().__init__(urwid.AttrMap(urwid.LineBox(self.display_widget, title="Local Node Info"), widget_style))
 
     def start(self):
-        if self.app.node != None:
+        if self.app.node is not None:
             self.t_last_announce.start()
             self.t_active_links.start()
             self.t_total_connections.start()
@@ -1563,7 +1551,7 @@ class NetworkDisplay():
 
         self.browser = Browser(self.app, "nomadnetwork", "node", auth_identity = self.app.identity, delegate = self)
 
-        if self.app.node != None:
+        if self.app.node is not None:
             self.browser.loopback = self.app.node.destination.hash
 
         self.known_nodes_display = KnownNodes(self.app)
@@ -1738,7 +1726,7 @@ class LXMFPeers(urwid.WidgetWrap):
 
     def delete_selected_entry(self):
         si = self.ilb.get_selected_item()
-        if si != None:
+        if si is not None:
             destination_hash = si.original_widget.destination_hash
             self.app.message_router.unpeer(destination_hash)
             self.delegate.reinit_lxmf_peers()
@@ -1747,7 +1735,7 @@ class LXMFPeers(urwid.WidgetWrap):
     def sync_selected_entry(self):
         sync_grace = 10
         si = self.ilb.get_selected_item()
-        if si != None:
+        if si is not None:
             destination_hash = si.original_widget.destination_hash
             if destination_hash in self.app.message_router.peers:
                 peer = self.app.message_router.peers[destination_hash]
@@ -1774,13 +1762,13 @@ class LXMFPeers(urwid.WidgetWrap):
                         title="!",
 
                     )
-                    dialog.delegate = self.delegate
-                    bottom = self
+        dialog.delegate = self.delegate
 
-                    overlay = urwid.Overlay(dialog, bottom, align=urwid.CENTER, width=urwid.RELATIVE_100, valign=urwid.MIDDLE, height=urwid.PACK, left=2, right=2)
+        overlay = urwid.Overlay(dialog, self, align=urwid.CENTER, width=urwid.RELATIVE_100, valign=urwid.MIDDLE, height=urwid.PACK, left=2, right=2)
+        dialog.delegate = self.delegate
 
-                    options = self.delegate.left_pile.options(urwid.WEIGHT, 1)
-                    self.delegate.left_pile.contents[0] = (overlay, options)
+        options = self.delegate.left_pile.options(urwid.WEIGHT, 1)
+        self.delegate.left_pile.contents[0] = (overlay, options)
 
 
     def close_list_dialogs(self):
@@ -1818,10 +1806,10 @@ class LXMFPeerEntry(urwid.WidgetWrap):
 
         node_identity = RNS.Identity.recall(destination_hash)
         display_str = RNS.prettyhexrep(destination_hash)
-        if node_identity != None:
+        if node_identity is not None:
             node_hash = RNS.Destination.hash_from_name_and_identity("nomadnetwork.node", node_identity)
             display_name = self.app.directory.alleged_display_str(node_hash)
-            if display_name != None:
+            if display_name is not None:
                 display_str = str(display_name)+"\n  "+display_str
 
         sym = g["sent"]

@@ -1,9 +1,12 @@
 import os
-import RNS
-import LXMF
 import shutil
+
+import LXMF
+import RNS
+
 import nomadnet
 from nomadnet.Directory import DirectoryEntry
+
 
 class Conversation:
     cached_conversations = {}
@@ -33,11 +36,11 @@ class Conversation:
             app_data = b""
             if dn != None:
                 app_data = dn.encode("utf-8")
-            
+
             # Add the announce to the directory announce
             # stream logger
             app.directory.lxmf_announce_received(destination_hash, app_data)
-            
+
         else:
             RNS.log("Ignored announce from "+RNS.prettyhexrep(destination_hash), RNS.LOG_DEBUG)
 
@@ -54,7 +57,7 @@ class Conversation:
             source_hash = lxmessage.destination_hash
         else:
             source_hash = lxmessage.source_hash
-        
+
         source_hash_path = RNS.hexrep(source_hash, delimit=False)
 
         conversation_path = app.conversationpath + "/" + source_hash_path
@@ -108,9 +111,9 @@ class Conversation:
                         sort_name = ""
                     else:
                         sort_name = display_name
-                    
+
                     trust_level      = app.directory.trust_level(source_hash, display_name)
-                    
+
                     entry = (source_hash_text, display_name, trust_level, sort_name, unread)
                     conversations.append(entry)
 
@@ -258,7 +261,7 @@ class Conversation:
 
                     print_result = self.app.print_file(qr_tmp_path)
                     os.unlink(qr_tmp_path)
-                    
+
                     if print_result:
                         message_path = Conversation.ingest(lxm, self.app, originator=True)
                         self.messages.append(ConversationMessage(message_path))

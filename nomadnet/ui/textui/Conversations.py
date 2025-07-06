@@ -1,14 +1,15 @@
-import RNS
 import os
 import time
-import nomadnet
-import LXMF
+from datetime import datetime
 
+import LXMF
+import RNS
 import urwid
 
-from datetime import datetime
+import nomadnet
 from nomadnet.Directory import DirectoryEntry
 from nomadnet.vendor.additional_urwid_widgets import IndicativeListBox
+
 
 class ConversationListDisplayShortcuts():
     def __init__(self, app):
@@ -199,7 +200,7 @@ class ConversationsDisplay():
                 if self.app.directory.preferred_delivery(bytes.fromhex(source_hash_text)) == DirectoryEntry.PROPAGATED:
                     direct_selected = False
                     propagated_selected = True
-                    
+
         except Exception:
             pass
 
@@ -329,7 +330,7 @@ class ConversationsDisplay():
         def confirmed(sender):
             try:
                 existing_conversations = nomadnet.Conversation.conversation_list(self.app)
-                
+
                 display_name = e_name.get_edit_text()
                 source_hash_text = e_id.get_edit_text()
                 source_hash = bytes.fromhex(source_hash_text)
@@ -422,7 +423,7 @@ class ConversationsDisplay():
 
                 if ingest_result == False:
                     raise ValueError("The URI contained no decodable messages")
-                
+
                 elif ingest_result == local_delivery_signal:
                     rdialog_pile = urwid.Pile([
                         urwid.Text("Message was decoded, decrypted successfully, and added to your conversation list."),
@@ -451,7 +452,7 @@ class ConversationsDisplay():
 
                     options = self.columns_widget.options(urwid.GIVEN, ConversationsDisplay.given_list_width)
                     self.columns_widget.contents[0] = (roverlay, options)
-                
+
                 elif ingest_result == duplicate_signal:
                     rdialog_pile = urwid.Pile([
                         urwid.Text("The decoded message has already been processed by the LXMF Router, and will not be ingested again."),
@@ -480,7 +481,7 @@ class ConversationsDisplay():
 
                     options = self.columns_widget.options(urwid.GIVEN, ConversationsDisplay.given_list_width)
                     self.columns_widget.contents[0] = (roverlay, options)
-                
+
                 else:
                     if self.app.enable_node:
                         propagation_text = "The decoded message was not addressed to this LXMF address, but has been added to the propagation node queues, and will be distributed on the propagation network."
@@ -569,7 +570,7 @@ class ConversationsDisplay():
     def sync_conversations(self):
         g = self.app.ui.glyphs
         self.dialog_open = True
-        
+
         def dismiss_dialog(sender):
             self.dialog_open = False
             self.sync_dialog = None
@@ -769,7 +770,7 @@ class ConversationsDisplay():
 
             if conversation_position != None:
                 self.ilb.select_item(conversation_position)
-        
+
 
     def make_conversation_widget(self, source_hash):
         if source_hash in ConversationsDisplay.cached_conversation_widgets:
@@ -838,7 +839,7 @@ class ConversationsDisplay():
 
         if trust_level != DirectoryEntry.TRUSTED:
             display_text += " <"+source_hash+">"
-        
+
         if trust_level != DirectoryEntry.UNTRUSTED:
             if unread:
                 if source_hash != self.currently_displayed_conversation:
@@ -998,7 +999,7 @@ class ConversationWidget(urwid.WidgetWrap):
                 self.display_widget = urwid.LineBox(
                     self.frame
                 )
-                
+
                 super().__init__(self.display_widget)
 
     def clear_history_dialog(self):
@@ -1038,7 +1039,7 @@ class ConversationWidget(urwid.WidgetWrap):
 
         self.frame.contents["body"] = (overlay, self.frame.options())
         self.frame.focus_position = "body"
-    
+
     def toggle_editor(self):
         if self.full_editor_active:
             self.frame.contents["footer"] = (self.minimal_editor, None)
@@ -1115,7 +1116,7 @@ class ConversationWidget(urwid.WidgetWrap):
                 added_hashes.append(message_hash)
                 message_widget = LXMessageWidget(message)
                 self.message_widgets.append(message_widget)
-        
+
         if self.sort_by_timestamp:
             self.message_widgets.sort(key=lambda m: m.timestamp, reverse=False)
         else:
@@ -1282,7 +1283,7 @@ class LXMessageWidget(urwid.WidgetWrap):
             encryption_string = " ["+g["encrypted"]+" "+str(message.get_transport_encryption())+"]"
         else:
             encryption_string = " ["+g["plaintext"]+" "+str(message.get_transport_encryption())+"]"
-        
+
         title_string = message_time.strftime(time_format)+encryption_string
 
         if app.lxmf_destination.hash == message.lxm.source_hash:

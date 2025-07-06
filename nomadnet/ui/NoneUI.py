@@ -1,7 +1,9 @@
-import RNS
 import time
 
+import RNS
+
 from nomadnet import NomadNetworkApp
+
 
 class NoneUI:
 

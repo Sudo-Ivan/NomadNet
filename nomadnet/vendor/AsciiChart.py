@@ -1,5 +1,8 @@
 from __future__ import division
+
 from math import ceil, floor, isnan
+
+
 # Derived from asciichartpy |  https://github.com/kroitor/asciichart/blob/master/asciichartpy/__init__.py
 class AsciiChart:
     def __init__(self, glyphset="unicode"):

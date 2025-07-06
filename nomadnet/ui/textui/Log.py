@@ -1,8 +1,10 @@
-import os
-import sys
 import itertools
 import mmap
+import os
+import sys
+
 import urwid
+
 import nomadnet
 
 
@@ -33,7 +35,7 @@ class LogDisplay():
         if self.widget is not None:
             self.widget.terminate()
             self.widget = None
-        
+
     def shortcuts(self):
         return self.shortcuts_display
 
@@ -57,7 +59,7 @@ class LogTerminal(urwid.WidgetWrap):
     def keypress(self, size, key):
         if key == "up":
             nomadnet.NomadNetworkApp.get_shared_instance().ui.main_display.frame.focus_position = "header"
-            
+
         return super(LogTerminal, self).keypress(size, key)
 
 

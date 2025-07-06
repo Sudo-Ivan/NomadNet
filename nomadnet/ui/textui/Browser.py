@@ -1,16 +1,20 @@
-import RNS
-import LXMF
 import io
 import os
-import time
-import urwid
 import shutil
-import nomadnet
 import subprocess
 import threading
-from .MicronParser import markup_to_attrmaps, make_style, default_state
+import time
+
+import LXMF
+import RNS
+import urwid
+
+import nomadnet
 from nomadnet.Directory import DirectoryEntry
 from nomadnet.vendor.Scrollable import *
+
+from .MicronParser import default_state, make_style, markup_to_attrmaps
+
 
 class BrowserFrame(urwid.Frame):
     def keypress(self, size, key):
@@ -46,15 +50,15 @@ class BrowserFrame(urwid.Frame):
                                 else:
                                     if hasattr(no, "key_timeout"):
                                         st = no
-                        
+
                             if st and hasattr(st, "key_timeout") and hasattr(st, "keypress") and callable(st.keypress):
                                 st.keypress(None, None)
 
                         nomadnet.NomadNetworkApp.get_shared_instance().ui.loop.set_alarm_in(0.25, df)
-                
+
                 except Exception as e:
                     RNS.log("Error while setting up cursor timeout. The contained exception was: "+str(e), RNS.LOG_ERROR)
-                                        
+
             return super(BrowserFrame, self).keypress(size, key)
 
         else:
@@ -213,7 +217,7 @@ class Browser:
                                 request_data[field_key] = w.edit_text
                             elif isinstance(w, urwid.RadioButton):
                                 if w.state:
-                                    user_data = getattr(w, "field_value", None)  
+                                    user_data = getattr(w, "field_value", None)
                                     if user_data is not None:
                                         request_data[field_key] = user_data
                             elif isinstance(w, urwid.CheckBox):
@@ -232,9 +236,9 @@ class Browser:
 
 
 
-                        
 
-                
+
+
             recurse_down(self.attr_maps)
             RNS.log("Including request data: "+str(request_data), RNS.LOG_DEBUG)
 
@@ -284,7 +288,7 @@ class Browser:
                 raise ValueError("Could not decode destination hash from LXMF link")
 
             existing_conversations = nomadnet.Conversation.conversation_list(self.app)
-            
+
             source_hash_text = link_target
             display_name_data = RNS.Identity.recall_app_data(bytes.fromhex(source_hash_text))
 
@@ -368,7 +372,7 @@ class Browser:
             pile = urwid.Pile([urwid.Text("!\n\n"+self.status_text(), align=urwid.CENTER)])
 
         return urwid.Filler(pile, urwid.MIDDLE)
-    
+
     def update_display(self):
         if self.status == Browser.DISCONECTED:
             self.display_widget.set_attr_map({None: "inactive_text"})
@@ -407,11 +411,11 @@ class Browser:
                     self.browser_footer.set_attr_map({None: style_name})
                     self.browser_header.set_attr_map({None: style_name})
                     self.display_widget.set_attr_map({None: style_name})
-            
+
             elif self.status == Browser.LINK_TIMEOUT:
                 self.browser_body = self.make_request_failed_widget()
                 self.browser_footer = urwid.Text("")
-            
+
             elif self.status <= Browser.REQUEST_SENT:
                 if len(self.attr_maps) == 0:
                     self.browser_body = urwid.Filler(
@@ -426,15 +430,15 @@ class Browser:
                     self.browser_footer.set_attr_map({None: style_name})
                     self.browser_header.set_attr_map({None: style_name})
                     self.display_widget.set_attr_map({None: style_name})
-            
+
             elif self.status == Browser.REQUEST_FAILED:
                 self.browser_body = self.make_request_failed_widget()
                 self.browser_footer = urwid.Text("")
-            
+
             elif self.status == Browser.REQUEST_TIMEOUT:
                 self.browser_body = self.make_request_failed_widget()
                 self.browser_footer = urwid.Text("")
-            
+
             else:
                 pass
 
@@ -457,7 +461,7 @@ class Browser:
     def disconnect(self):
         if self.link != None:
             self.link.teardown()
-        
+
         self.request_data = None
         self.attr_maps = []
         self.status = Browser.DISCONECTED
@@ -568,7 +572,7 @@ class Browser:
                 fs.close()
 
                 self.saved_file_name = file_destination.replace(self.app.downloads_path+"/", "", 1)
-                
+
                 self.update_display()
             else:
                 RNS.log("The requested local download file does not exist: "+str(file_path), RNS.LOG_ERROR)
@@ -578,7 +582,7 @@ class Browser:
             self.response_speed = None
             self.progress_updated_at = None
             self.previous_progress = 0
-            
+
         except Exception as e:
             RNS.log("An error occurred while handling file response. The contained exception was: "+str(e), RNS.LOG_ERROR)
 
@@ -745,7 +749,7 @@ class Browser:
                 if display_name != None:
                     display_name = display_name.decode("utf-8")
                     disp_str = " \""+display_name+"\""
-                    
+
                 def confirmed(sender):
                     node_entry = DirectoryEntry(self.destination_hash, display_name=display_name, hosts_node=True)
                     self.app.directory.remember(node_entry)
@@ -796,7 +800,7 @@ class Browser:
             self.status = Browser.DONE
             self.page_data = cached
             self.markup = self.page_data.decode("utf-8")
-            
+
             self.page_background_color = None
             bgpos = self.markup.find("#!bg=")
             if bgpos:
@@ -814,7 +818,7 @@ class Browser:
                     self.page_foreground_color = fg
 
             self.attr_maps = markup_to_attrmaps(self.markup, url_delegate=self, fg_color=self.page_foreground_color, bg_color=self.page_background_color)
-            
+
             self.response_progress = 0
             self.response_speed = None
             self.progress_updated_at = None
@@ -849,7 +853,7 @@ class Browser:
                             env_map = self.request_data
                         else:
                             env_map = {}
-                            
+
                         if "PATH" in os.environ:
                             env_map["PATH"] = os.environ["PATH"]
 
@@ -863,7 +867,7 @@ class Browser:
                 self.status = Browser.DONE
                 self.page_data = page_data
                 self.markup = self.page_data.decode("utf-8")
-                
+
                 self.page_background_color = None
                 bgpos = self.markup.find("#!bg=")
                 if bgpos:
@@ -881,7 +885,7 @@ class Browser:
                         self.page_foreground_color = fg
 
                 self.attr_maps = markup_to_attrmaps(self.markup, url_delegate=self, fg_color=self.page_foreground_color, bg_color=self.page_background_color)
-                
+
                 self.response_progress = 0
                 self.response_speed = None
                 self.progress_updated_at = None
@@ -1060,7 +1064,7 @@ class Browser:
             if cache_time == 0:
                 RNS.log("Received page "+str(self.current_url())+", not caching due to header.", RNS.LOG_DEBUG)
             else:
-                RNS.log("Received page "+str(self.current_url())+", caching for %.3f hours." % (cache_time/60/60), RNS.LOG_DEBUG)    
+                RNS.log("Received page "+str(self.current_url())+", caching for %.3f hours." % (cache_time/60/60), RNS.LOG_DEBUG)
                 self.cache_page(cache_time)
 
         except Exception as e:
@@ -1106,7 +1110,7 @@ class Browser:
                     RNS.log("Additionally, an exception occurred while unlinking the entry: "+str(e), RNS.LOG_ERROR)
                     RNS.log("You will probably need to remove this entry manually by deleting the file: "+str(cachepath), RNS.LOG_ERROR)
 
-                
+
         return None
 
     def clean_cache(self):
@@ -1177,7 +1181,7 @@ class Browser:
                 fh.close()
 
                 self.saved_file_name = file_destination.replace(self.app.downloads_path+"/", "", 1)
-                    
+
             self.status = Browser.DONE
             self.response_progress = 0
             self.response_speed = None
@@ -1188,7 +1192,7 @@ class Browser:
         except Exception as e:
             RNS.log("An error occurred while handling file response. The contained exception was: "+str(e), RNS.LOG_ERROR)
 
-    
+
     def request_failed(self, request_receipt=None):
         if request_receipt != None:
             if request_receipt.request_id == self.last_request_id:
@@ -1245,7 +1249,7 @@ class Browser:
         self.response_time          = request_receipt.get_response_time()
         self.response_size          = request_receipt.response_size
         self.response_transfer_size = request_receipt.response_transfer_size
-        
+
         now = time.time()
         if self.progress_updated_at == None: self.progress_updated_at = now
         if now > self.progress_updated_at+1:

@@ -1,5 +1,6 @@
 import urwid
 
+
 class DialogLineBox(urwid.LineBox):
     def __init__(self, body, parent=None, title="?"):
         super().__init__(body, title=title)

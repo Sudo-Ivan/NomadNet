@@ -1,8 +1,9 @@
-import RNS
 import time
-import nomadnet
 from math import log10, pow
 
+import RNS
+
+import nomadnet
 from nomadnet.vendor.additional_urwid_widgets.FormWidgets import *
 from nomadnet.vendor.AsciiChart import AsciiChart
 
@@ -356,10 +357,10 @@ class RNodeCalculator(urwid.WidgetWrap):
             self.link_budget_widget.set_text(f"Link Budget: {result['link_budget']}")
             self.sensitivity_widget.set_text(f"Sensitivity: {result['sensitivity']}")
 
-        except (ValueError, KeyError, TypeError) as e:
-            self.data_rate_widget.set_text(f"Data Rate: Waiting for parameters...")
-            self.link_budget_widget.set_text(f"Link Budget: Waiting for valid parameters...")
-            self.sensitivity_widget.set_text(f"Sensitivity: Waiting for parameters...")
+        except (ValueError, KeyError, TypeError):
+            self.data_rate_widget.set_text("Data Rate: Waiting for parameters...")
+            self.link_budget_widget.set_text("Link Budget: Waiting for valid parameters...")
+            self.sensitivity_widget.set_text("Sensitivity: Waiting for parameters...")
 
 ### INTERFACE FIELDS ###
 COMMON_INTERFACE_OPTIONS = [
@@ -2786,7 +2787,7 @@ class ShowInterface(urwid.WidgetWrap):
 
             self.tx = tx
             self.rx = rx
-        except Exception as e:
+        except Exception:
             if not hasattr(self.parent,
                            'disconnect_overlay') or self.parent.widget is not self.parent.disconnect_overlay:
                 dialog_text = urwid.Pile([
@@ -2964,7 +2965,7 @@ class InterfaceDisplay:
                     tx = stats_for_interface.get("txb", 0)
                     rx = stats_for_interface.get("rxb", 0)
                     item.update_stats(tx, rx)
-        except Exception as e:
+        except Exception:
             if not hasattr(self, 'disconnect_overlay') or self.widget is not self.disconnect_overlay:
                 dialog_text = urwid.Pile([
                     urwid.Text(("disconnected_status", "(!) RNS Instance Disconnected"), align="center"),

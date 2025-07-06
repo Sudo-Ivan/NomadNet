@@ -1,11 +1,12 @@
 # Simple message board that can be hosted on a NomadNet node, messages can be posted by 'conversing' with a unique peer, all messages are then forwarded to the message board.
 # https://github.com/chengtripp/lxmf_messageboard
 
-import RNS
-import LXMF
 import os
 import time
 from queue import Queue
+
+import LXMF
+import RNS
 import RNS.vendor.umsgpack as msgpack
 
 display_name = "NomadNet Message Board"
