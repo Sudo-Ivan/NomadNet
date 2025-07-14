@@ -1,26 +1,47 @@
-FROM python:3.12-alpine as build
+FROM cgr.dev/chainguard/python:latest-dev AS build
 
-RUN apk add --no-cache build-base linux-headers libffi-dev cargo
+USER root
 
-# Create a virtualenv that we'll copy to the published image
+RUN apk add --no-cache \
+    --repository=https://packages.wolfi.dev/os \
+    build-base \
+    libffi-dev \
+    rust \
+    pkgconf \
+    linux-headers
+
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip3 install setuptools-rust pyopenssl cryptography
+ENV PYTHONPATH="/app"
+
+RUN pip3 install setuptools-rust pyopenssl cryptography rns>=0.9.6 lxmf>=0.7.1 urwid>=2.6.16 qrcode
 
 COPY . /app/
-RUN cd /app/ && pip3 install .
+WORKDIR /app
 
-# Use multi-stage build, as we don't need rust compilation on the final image
-FROM python:3.12-alpine
+RUN pip3 install -e .
+
+RUN mkdir -p /home/nonroot/.reticulum /home/nonroot/.nomadnetwork && \
+    chown -R 65532:65532 /home/nonroot && \
+    chmod -R 755 /home/nonroot/.nomadnetwork
+
+FROM cgr.dev/chainguard/python:latest
 
 LABEL org.opencontainers.image.documentation="https://github.com/markqvist/NomadNet#nomad-network-daemon-with-docker"
 
+COPY --from=build /opt/venv /opt/venv
+COPY --from=build /app /app
+COPY --from=build /home/nonroot /home/nonroot
+
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PYTHONUNBUFFERED="yes"
-COPY --from=build /opt/venv /opt/venv
+ENV PYTHONPATH="/app"
 
-VOLUME /root/.reticulum
-VOLUME /root/.nomadnetwork
+USER nonroot
+WORKDIR /home/nonroot
 
-ENTRYPOINT ["nomadnet"]
+VOLUME /home/nonroot/.reticulum
+VOLUME /home/nonroot/.nomadnetwork
+
+ENTRYPOINT ["/opt/venv/bin/nomadnet"]
 CMD ["--daemon"]
