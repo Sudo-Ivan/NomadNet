@@ -14,7 +14,7 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 ENV PYTHONPATH="/app"
 
-RUN pip3 install setuptools-rust pyopenssl cryptography rns>=0.9.6 lxmf>=0.7.1 urwid>=2.6.16 qrcode
+RUN pip3 install setuptools-rust pyopenssl cryptography rns>=1.0.0 lxmf>=0.8.0 urwid>=2.6.16 qrcode
 
 COPY . /app/
 WORKDIR /app
