@@ -2,9 +2,10 @@ services:
   nomadnet:
     image: ghcr.io/sudo-ivan/nomadnet:master
     container_name: nomadnet
+    user: 65532:65532
     volumes:
-      - /path/to/nomadnet:/home/nonroot/.nomadnetwork
-      - /path/to/reticulum:/home/nonroot/.reticulum
+      - /path/to/nomadnet-data:/home/nonroot/.nomadnetwork
+      - /path/to/reticulum-data:/home/nonroot/.reticulum
     deploy:
       resources:
         limits:
@@ -20,10 +21,6 @@ services:
       - ALL
     cap_add:
       - NET_BIND_SERVICE
-    ulimits:
-      nofile:
-        soft: 512
-        hard: 1024
     restart: unless-stopped
     networks:
       - nomadnet_network
