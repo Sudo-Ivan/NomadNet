@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   nomadnet:
     image: ghcr.io/sudo-ivan/nomadnet:master
     container_name: nomadnet
     volumes:
-      - ./nomadnet:/home/nonroot/.nomadnetwork
-      - ./reticulum:/home/nonroot/.reticulum
+      - /path/to/nomadnet:/home/nonroot/.nomadnetwork
+      - /path/to/reticulum:/home/nonroot/.reticulum
     deploy:
       resources:
         limits:
@@ -27,3 +25,9 @@ services:
         soft: 512
         hard: 1024
     restart: unless-stopped
+    networks:
+      - nomadnet_network
+
+networks:
+  nomadnet_network:
+    driver: bridge
