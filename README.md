@@ -3,7 +3,7 @@
 - Rootless and Smaller Docker Image
 - docker-compose.yml following OWASP Docker Best Practices
 
-## Usage 
+## Usage
 
 Create directories and change permissions
 
@@ -21,6 +21,18 @@ docker compose up -d
 ## Build Dockerfile Locally
 ```bash
 docker compose -f docker-compose.build.yml up -d
+```
+
+```bash
+podman run -d \
+  --name nomadnet-quad4 \
+  --network host \
+  --cap-drop ALL \
+  --cap-add NET_BIND_SERVICE \
+  --security-opt no-new-privileges \
+  -v /quad4rns/nomadnet:/home/nonroot/.nomadnetwork \
+  -v /quad4rns/reticulum:/home/nonroot/.reticulum \
+  ghcr.io/sudo-ivan/nomadnet:master
 ```
 
 # Nomad Network - Communicate Freely
