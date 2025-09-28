@@ -1,3 +1,28 @@
+# Ivans Fork
+
+- Rootless and Smaller Docker Image
+- docker-compose.yml following OWASP Docker Best Practices
+
+## Usage 
+
+Create directories and change permissions
+
+```bash
+mkdir -p /path/to/nomadnet /path/to/reticulum
+chown -R 65532:65532 /path/to/nomadnet /path/to/reticulum
+```
+
+Update docker-compose.yml with the correct paths
+
+```bash
+docker compose up -d
+```
+
+## Build Dockerfile Locally
+```bash
+docker compose -f docker-compose.build.yml up -d
+```
+
 # Nomad Network - Communicate Freely
 
 Off-grid, resilient mesh communication with strong encryption, forward secrecy and extreme privacy.
