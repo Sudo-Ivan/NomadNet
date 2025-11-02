@@ -124,11 +124,13 @@ class NomadNetworkApp:
 
         self.peer_announce_at_start  = True
         self.try_propagation_on_fail = True
-        self.disable_propagation     = False
+        self.disable_propagation     = True
         self.notify_on_new_message   = True
 
         self.lxmf_max_propagation_size = None
+        self.lxmf_max_sync_size        = None
         self.lxmf_max_incoming_size    = None
+        self.node_propagation_cost     = LXMF.LXMRouter.PROPAGATION_COST
 
         self.periodic_lxmf_sync = True
         self.lxmf_sync_interval = 360*60
@@ -302,8 +304,8 @@ class NomadNetworkApp:
 
         self.message_router = LXMF.LXMRouter(
             identity = self.identity, storagepath = self.storagepath, autopeer = True,
-            propagation_limit = self.lxmf_max_propagation_size, delivery_limit = self.lxmf_max_incoming_size,
-            max_peers = self.max_peers, static_peers = static_peers,
+            propagation_limit = self.lxmf_max_propagation_size, sync_limit = self.lxmf_max_sync_size, delivery_limit = self.lxmf_max_incoming_size,
+            max_peers = self.max_peers, static_peers = static_peers, propagation_cost=self.node_propagation_cost
         )
 
         self.message_router.register_delivery_callback(self.lxmf_delivery)
@@ -876,7 +878,7 @@ class NomadNetworkApp:
                     self.node_name = self.config["node"]["node_name"]
 
             if not "disable_propagation" in self.config["node"]:
-                self.disable_propagation = False
+                self.disable_propagation = True
             else:
                 self.disable_propagation = self.config["node"].as_bool("disable_propagation")
 
@@ -887,6 +889,14 @@ class NomadNetworkApp:
                 if value < 1:
                     value = 1
                 self.lxmf_max_propagation_size = value
+
+            if not "max_sync_size" in self.config["node"]:
+                self.lxmf_max_sync_size = 256*40
+            else:
+                value = self.config["node"].as_float("max_sync_size")
+                if value < self.lxmf_max_propagation_size:
+                    value = self.lxmf_max_propagation_size
+                self.lxmf_max_sync_size = value
 
             if not "announce_at_start" in self.config["node"]:
                 self.node_announce_at_start = False
@@ -901,6 +911,13 @@ class NomadNetworkApp:
                 if value < 1:
                     value = 1
                 self.node_announce_interval = value
+
+            if not "propagation_cost" in self.config["node"]:
+                self.node_propagation_cost = 16
+            else:
+                value = self.config["node"].as_int("propagation_cost")
+                if value < 13: value = 13
+                self.node_propagation_cost = value
                 
             if "pages_path" in self.config["node"]:
                 self.pagespath = self.config["node"]["pages_path"]
@@ -1162,13 +1179,54 @@ announce_at_start = Yes
 
 # When Nomad Network is hosting a page-serving
 # node, it can also act as an LXMF propagation
-# node. If there is already a large amount of
+# node. This is a convenient feature that lets
+# you easily set up and run a propagation node
+# on the network, but it is not as fully
+# featured as using the lxmd program to host a
+# propagation node. For complete control and
+# flexibility, use lxmd to run a PN. For a
+# small local system or network, the built-in
+# PN functionality will suffice for most cases.
+#
+# If there is already a large amount of
 # propagation nodes on the network, or you
 # simply want to run a pageserving-only node,
-# you can disable running a propagation node.
+# you should disable running a propagation node.
 # Due to lots of propagation nodes being
 # available, this is currently the default.
+
 disable_propagation = Yes
+
+# For clients and other propagation nodes
+# delivering messages via this node, you can
+# configure the minimum required propagation
+# stamp costs. All messages delivered to the
+# propagation node network must have a valid
+# propagation stamp, or they will be rejected.
+# Clients automatically detect the stamp cost
+# for the node they are delivering to, and
+# compute a corresponding stamp before trying
+# to deliver the message to the propagation
+# node.
+#
+# Propagation stamps are easier to verify in
+# large batches, and therefore also somewhat
+# easier to compute for the senders. As such,
+# a reasonable propagation stamp cost should
+# be a bit higher than the normal peer-to-peer
+# stamp costs.
+#
+# Propagation stamps does not incur any extra
+# load for propagation nodes processing them,
+# since they are only required to verify that
+# they are correct, and only the generation
+# is computationally costly. Setting a sensible
+# propagation stamp cost (and periodically
+# checking the average network consensus) helps
+# keep spam and misuse out of the propagation
+# node network.
+
+propagation_cost = 16
 
 # The maximum amount of storage to use for
 # the LXMF Propagation Node message store,
@@ -1179,19 +1237,26 @@ disable_propagation = Yes
 # new and small. Large and old messages will
 # be removed first. This setting is optional
 # and defaults to 2 gigabytes.
+
 # message_storage_limit = 2000
 
 # The maximum accepted transfer size per in-
-# coming propagation transfer, in kilobytes.
-# This also sets the upper limit for the size
-# of single messages accepted onto this node.
+# coming propagation message, in kilobytes.
+# This sets the upper limit for the size of
+# single messages accepted onto this node.
+
+max_transfer_size = 256
+
+# The maximum accepted transfer size per in-
+# coming propagation node sync.
 #
 # If a node wants to propagate a larger number
 # of messages to this node, than what can fit
 # within this limit, it will prioritise sending
-# the smallest, newest messages first, and try
+# the smallest messages first, and try again
 # with any remaining messages at a later point.
-max_transfer_size = 256
+
+max_sync_size = 10240
 
 # You can tell the LXMF message router to
 # prioritise storage for one or more
@@ -1200,29 +1265,34 @@ max_transfer_size = 256
 # keeping messages for destinations specified
 # with this option. This setting is optional,
 # and generally you do not need to use it.
+
 # prioritise_destinations = 41d20c727598a3fbbdf9106133a3a0ed, d924b81822ca24e68e2effea99bcb8cf
 
 # You can configure the maximum number of other
 # propagation nodes that this node will peer
-# with automatically. The default is 50.
-# max_peers = 25
+# with automatically. The default is 20.
+
+# max_peers = 20
 
 # You can configure a list of static propagation
 # node peers, that this node will always be
 # peered with, by specifying a list of
 # destination hashes.
+
 # static_peers = e17f833c4ddf8890dd3a79a6fea8161d, 5a2d0029b6e5ec87020abaea0d746da4
 
 # You can specify the interval in minutes for
 # rescanning the hosted pages path. By default,
 # this option is disabled, and the pages path
 # will only be scanned on startup.
+
 # page_refresh_interval = 0
 
 # You can specify the interval in minutes for
 # rescanning the hosted files path. By default,
 # this option is disabled, and the files path
 # will only be scanned on startup.
+
 # file_refresh_interval = 0
 
 [printing]
@@ -1231,6 +1301,7 @@ max_transfer_size = 256
 # various kinds of information and messages.
 
 # Printing messages is disabled by default
+
 print_messages = No
 
 # You can configure a custom template for
@@ -1238,24 +1309,29 @@ print_messages = No
 # option, set a path to the template and
 # restart Nomad Network, a default template
 # will be created that you can edit.
+
 # message_template = ~/.nomadnetwork/print_template_msg.txt
 
 # You can configure Nomad Network to only
 # print messages from trusted destinations.
+
 # print_from = trusted
 
 # Or specify the source LXMF addresses that
 # will automatically have messages printed
 # on arrival.
+
 # print_from = 76fe5751a56067d1e84eef3e88eab85b, 0e70b5848eb57c13154154feaeeb89b7
 
 # Or allow printing from anywhere, if you
 # are feeling brave and adventurous.
+
 # print_from = everywhere
 
 # You can configure the printing command.
 # This will use the default CUPS printer on
 # your system.
+
 print_command = lp
 
 # You can specify what printer to use
